@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 import pandas as pd
 import streamlit as st
 
+from schemas.activity import StravaActivity
 from utils.merge_helpers import (
     detect_commute_pairs,
     merge_activities_to_gpx,
@@ -59,20 +60,19 @@ if not raw_activities:
     st.stop()
 
 # Build du catalogue
-data_records: List[Dict[str, Any]] = []
+data_records: List[StravaActivity] = []
 for a in raw_activities:
-    data_records.append(
-        {
-            "Sélection": False,
-            "ID": a["id"],
-            "Date": datetime.fromisoformat(a["start_date"].replace("Z", "+00:00")).strftime("%Y-%m-%d %H:%M"),
-            "Nom": a["name"],
-            "Type": a["type"],
-            "Distance (km)": round(a["distance"] / 1000, 2),
-            "Durée": str(timedelta(seconds=a["moving_time"])),
-            "_raw": a,
-        }
+    activity = StravaActivity(
+        selection=False,
+        id=a["id"],
+        date=datetime.fromisoformat(a["start_date"].replace("Z", "+00:00")).strftime("%Y-%m-%d %H:%M"),
+        name=a["name"],
+        activity_type=a["type"],
+        distance_km=round(a["distance"] / 1000, 2),
+        duration=str(timedelta(seconds=a["moving_time"])),
+        raw=a,
     )
+    data_records.append(activity)
 
 df = pd.DataFrame(data_records)
 

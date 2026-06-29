@@ -17,7 +17,9 @@ repos:
     rev: v1.8.0
     hooks:
       - id: mypy
+        args: [ --strict ]
         additional_dependencies: [
           "types-requests",
-          "pandas-stubs"
+          "pandas-stubs",
+          "pydantic"
         ]
