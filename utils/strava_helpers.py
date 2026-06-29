@@ -14,6 +14,7 @@ def get_access_token() -> str:
         "client_secret": st.secrets["STRAVA_CLIENT_SECRET"],
         "refresh_token": st.secrets["STRAVA_REFRESH_TOKEN"],
         "grant_type": "refresh_token",
+        "scope": "activity:read,activity:write"
     }
     res = requests.post("https://www.strava.com/oauth/token", data=payload)
     if res.status_code == 200:
@@ -33,7 +34,6 @@ def fetch_recent_activities(token: str, limit: int = 10) -> List[Dict[str, Any]]
         f"https://www.strava.com/api/v3/athlete/activities?per_page={limit}",
         headers=headers,
     )
-    print(res.status_code)
     if res.status_code == 200:
         activities: List[Dict[str, Any]] = res.json()
         return activities
