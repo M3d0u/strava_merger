@@ -1,0 +1,30 @@
+[project]
+name = "strava-merge"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gpxpy>=1.6.2",
+    "lxml>=6.1.1",
+    "pandas>=3.0.4",
+    "requests>=2.34.2",
+    "streamlit>=1.58.0",
+    "types-requests>=2.33.0.20260518",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 150
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "C90"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+explicit_package_bases = true
+namespace_packages = true
+disable_error_code = "attr-defined"
