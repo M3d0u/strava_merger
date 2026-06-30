@@ -72,7 +72,7 @@ for a in raw_activities:
         duration=str(timedelta(seconds=a["moving_time"])),
         raw=a,
     )
-    data_records.append(activity)
+    data_records.append(activity.model_dump())
 
 df = pd.DataFrame(data_records)
 
@@ -90,23 +90,21 @@ if commute_pairs:
 
         with col_info:
             st.markdown(f"🚲 **Commute du {date_label}** ({round(pair[0]['distance']/1000, 1)}km + {round(pair[1]['distance']/1000, 1)}km)")
+            st.caption(f"Matin : {pair[0]['name']} | Soir : {pair[1]['name']}")
 
         with col_btn:
             if st.button(f"⚡ Fusionner le {date_label}", key=f"auto_merge_{idx}"):
                 with st.spinner(f"Consolidation du Vélotaf du {date_label}..."):
-                    auto_name = f"💼 Vélotaf - {date_label}"
+                    auto_name = f"🚴🏻Velotaf - {date_label}"
 
                     # Run Pipeline
                     gpx_xml = merge_activities_to_gpx(token, pair)
+                    for act in pair:
+                        delete_activity(token, int(act["id"]))
                     upload_res = upload_gpx(token, gpx_xml, auto_name)
 
                     if upload_res and "id" in upload_res:
                         st.toast(f"Vélotaf du {date_label} téléversé !", icon="✅")
-
-                        # Nettoyage automatique des 2 activités sources
-                        for act in pair:
-                            delete_activity(token, int(act["id"]))
-
                         st.balloons()
                         st.success(f"Fait ! Commute du {date_label} traité.")
                         st.cache_data.clear()
@@ -120,15 +118,15 @@ if commute_pairs:
 # ==========================================
 
 edited_df = st.data_editor(
-    df.drop(columns=["_raw"]),
+    df.drop(columns=["raw"]),
     column_config={"Sélection": st.column_config.CheckboxColumn(required=True)},
     disabled=["ID", "Date", "Nom", "Type", "Distance (km)", "Durée"],
     hide_index=True,
 )
 
 # Extraction des payloads originaux basés sur la sélection utilisateur
-selected_indices: List[int] = edited_df[edited_df["Sélection"] == True].index.tolist()  # noqa: E712
-selected_activities: List[Dict[str, Any]] = [data_records[idx]["_raw"] for idx in selected_indices]
+selected_indices: List[int] = edited_df[edited_df["selection"] == True].index.tolist()
+selected_activities: List[Dict[str, Any]] = [data_records[idx]["raw"] for idx in selected_indices]
 
 st.divider()
 
