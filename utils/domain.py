@@ -105,7 +105,7 @@ class StravaActivity(BaseModel):
 
     @staticmethod
     def detect_commutes(activities: List["StravaActivity"]) -> List[List["StravaActivity"]]:
-        """Analyse le dataset d'entités pour identifier les fenêtres de Vélotaf."""
+        """Analyse entity data to detect commute windows."""
         by_date: Dict[str, Dict[str, Optional["StravaActivity"]]] = {}
         m_start, m_end = dt_time(7, 50), dt_time(8, 50)
         e_start, e_end = dt_time(17, 30), dt_time(19, 0)
@@ -132,4 +132,18 @@ class StravaActivity(BaseModel):
         for pair in by_date.values():
             if pair["morning"] and pair["evening"]:
                 pairs.append([pair["morning"], pair["evening"]])
-        return pairs
+        return 
+    
+    @staticmethod
+    def detect_WeightTraining(activities: List["StravaActivity"]) -> StravaActivity:
+        """Analyse entity data to detect weight training to rename."""
+
+        # Get all weightTraining and sort them from most recent. If most recent does not contains "Push" or "Pull", then rename it Push if most recent -1 is Pull else Pull
+        weight_activities = [act for act in activities if act.activity_type == "WeightTraining"]
+        if not weight_activities:
+            return None
+        sorted_activities = sorted(weight_activities, key=lambda x: str(x.raw.get("start_date", "")))
+        most_recent_activity = sorted_activities[-1]
+
+        if "Push" not in most_recent_activity.name or "Pull" not in most_recent_activity.name :
+            print("renaming activity")
