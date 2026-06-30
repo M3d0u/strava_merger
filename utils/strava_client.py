@@ -1,6 +1,6 @@
 """Strava api wrapper"""
 
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, cast
 
 import requests
 import streamlit as st
@@ -11,7 +11,7 @@ class StravaAPIClient:
         self.client_id: str = st.secrets["STRAVA_CLIENT_ID"]
         self.client_secret: str = st.secrets["STRAVA_CLIENT_SECRET"]
         self.refresh_token: str = st.secrets["STRAVA_REFRESH_TOKEN"]
-        self._access_token: Optional[str] = None
+        self._access_token: str | None = None
 
     @property
     def access_token(self) -> str:
@@ -52,7 +52,7 @@ class StravaAPIClient:
         )
         return res.json() if res.status_code == 200 else []
 
-    def upload_gpx(self, gpx_xml: str, name: str) -> Optional[Dict[str, Any]]:
+    def upload_gpx(self, gpx_xml: str, name: str) -> Dict[str, Any] | None:
         """Upload GPX file to Strava"""
         headers = {"Authorization": f"Bearer {self.access_token}"}
         files = {"file": ("merged.gpx", gpx_xml, "application/gpx+xml")}
@@ -63,3 +63,11 @@ class StravaAPIClient:
     def link_to_delete_activity(self, activity_id: int) -> str:
         """Create a direct link to delete an activity."""
         return f"https://www.strava.com/activities/{activity_id}"
+
+    def rename_activity(self, activity_id: int, new_name: str) -> Any:
+        """Rename an activity."""
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        data = {"name": new_name}
+        res = requests.put(f"https://www.strava.com/api/v3/activities/{activity_id}", headers=headers, data=data)
+        print(res.json())
+        return res.json() if res.status_code in [200, 201] else None
