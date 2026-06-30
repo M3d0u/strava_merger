@@ -40,9 +40,44 @@ def check_password() -> bool:
 if not check_password():
     st.stop()
 
+
+# ==========================================
+# REUSABLE UI PIPELINE COMPONENT
+# ==========================================
+@st.dialog("🔄 Validation de la fusion")  # type: ignore[misc]
+def render_merge_pipeline_dialog(client: StravaAPIClient, activities_to_merge: List[StravaActivity], target_name: str) -> None:
+    """Launch the process: give deletion links, then handle the upload."""
+    st.warning(
+        "⚠️ **Strava rejette les doublons géospatiaux.** Vous devez impérativement supprimer "
+        "les activités d'origine via les liens ci-dessous avant d'envoyer la nouvelle fusion."
+    )
+
+    for act in activities_to_merge:
+        delete_url = act.delete(client)
+        st.link_button(f"🗑️ Supprimer sur Strava : {act.name} ({act.distance_km}km)", url=delete_url, use_container_width=True)
+
+    st.divider()
+    st.write("Une fois les suppressions validées sur votre profil Strava, finalisez l'opération :")
+
+    if st.button("🚀 Confirmer & Téléverser la fusion", type="primary", use_container_width=True):
+        with st.spinner("Génération du GPX et synchronisation..."):
+            gpx_xml = StravaActivity.merge_to_gpx(client, activities_to_merge)
+            upload_res = client.upload_gpx(gpx_xml, target_name)
+
+            if upload_res and "id" in upload_res:
+                st.success("Nouvelle activité consolidée créée avec succès ! 🎉")
+                st.cache_data.clear()
+                st.rerun()
+
+
 st.title("🏃‍♂️ Strava Activity Merger")
 
 client = StravaAPIClient()
+if client is None:
+    st.error(f"Erreur d'authentification Strava : {client}")
+    st.stop()
+    RuntimeError("Streamlit execution stopped")
+
 raw_data = client.fetch_activities(limit=12)
 
 if not raw_data:

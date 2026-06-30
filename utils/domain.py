@@ -1,16 +1,18 @@
 """Pydantic schema and domain entity representing a strava activity."""
 
-from datetime import datetime, time as dt_time, timedelta
+from datetime import datetime, timedelta
+from datetime import time as dt_time
 from typing import Any, Dict, List, Optional
-from lxml import etree as mod_etree
-from pydantic import BaseModel, Field
+
 import gpxpy
 import gpxpy.gpx
+from lxml import etree as mod_etree
+from pydantic import BaseModel, Field
+
 from utils.strava_client import StravaAPIClient
 
 
 class StravaActivity(BaseModel):
-
     selection: bool = False
     id: int
     date: str
@@ -70,17 +72,11 @@ class StravaActivity(BaseModel):
             if "latlng" not in act.streams:
                 continue
 
-            start_dt = datetime.fromisoformat(
-                str(act.raw.get("start_date", "")).replace("Z", "+00:00")
-            )
+            start_dt = datetime.fromisoformat(str(act.raw.get("start_date", "")).replace("Z", "+00:00"))
             latlng: List[List[float]] = act.streams["latlng"]["data"]
             time_offsets: List[int] = act.streams["time"]["data"]
-            altitudes: List[Optional[float]] = act.streams.get("altitude", {}).get(
-                "data", [None] * len(latlng)
-            )
-            hr: List[Optional[int]] = act.streams.get("heartrate", {}).get(
-                "data", [None] * len(latlng)
-            )
+            altitudes: List[Optional[float]] = act.streams.get("altitude", {}).get("data", [None] * len(latlng))
+            hr: List[Optional[int]] = act.streams.get("heartrate", {}).get("data", [None] * len(latlng))
 
             for i in range(len(latlng)):
                 point_time = start_dt + timedelta(seconds=int(time_offsets[i]))
@@ -104,7 +100,7 @@ class StravaActivity(BaseModel):
         return str(gpx.to_xml())
 
     @staticmethod
-    def detect_commutes(activities: List["StravaActivity"]) -> List[List["StravaActivity"]]:
+    def detect_commutes(activities: List["StravaActivity"]) -> List[List["StravaActivity"]] | None:
         """Analyse entity data to detect commute windows."""
         by_date: Dict[str, Dict[str, Optional["StravaActivity"]]] = {}
         m_start, m_end = dt_time(7, 50), dt_time(8, 50)
@@ -132,18 +128,4 @@ class StravaActivity(BaseModel):
         for pair in by_date.values():
             if pair["morning"] and pair["evening"]:
                 pairs.append([pair["morning"], pair["evening"]])
-        return 
-    
-    @staticmethod
-    def detect_WeightTraining(activities: List["StravaActivity"]) -> StravaActivity:
-        """Analyse entity data to detect weight training to rename."""
-
-        # Get all weightTraining and sort them from most recent. If most recent does not contains "Push" or "Pull", then rename it Push if most recent -1 is Pull else Pull
-        weight_activities = [act for act in activities if act.activity_type == "WeightTraining"]
-        if not weight_activities:
-            return None
-        sorted_activities = sorted(weight_activities, key=lambda x: str(x.raw.get("start_date", "")))
-        most_recent_activity = sorted_activities[-1]
-
-        if "Push" not in most_recent_activity.name or "Pull" not in most_recent_activity.name :
-            print("renaming activity")
+        return None

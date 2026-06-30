@@ -1,12 +1,12 @@
 """Strava api wrapper"""
 
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, Optional, cast
+
 import requests
 import streamlit as st
 
 
 class StravaAPIClient:
-
     def __init__(self) -> None:
         self.client_id: str = st.secrets["STRAVA_CLIENT_ID"]
         self.client_secret: str = st.secrets["STRAVA_CLIENT_SECRET"]
@@ -21,7 +21,7 @@ class StravaAPIClient:
         return cast(str, self._access_token)
 
     @st.cache_data(ttl=3000)  # type: ignore[misc]
-    def _refresh_access_token(_self) -> str:  # _self évite que Streamlit ne cache l'instance
+    def _refresh_access_token(_self) -> str | None:  # _self évite que Streamlit ne cache l'instance
         """Rotate token OAuth"""
         payload = {
             "client_id": _self.client_id,
@@ -33,10 +33,8 @@ class StravaAPIClient:
         if res.status_code == 200:
             token: str = res.json()["access_token"]
             return token
-        st.error(f"Erreur d'authentification Strava : {res.text}")
-        st.stop()
-        raise RuntimeError("Streamlit execution stopped")
-    
+        return None
+
     def fetch_streams(self, activity_id: int) -> Any:
         """Retrieve activity streams"""
         headers = {"Authorization": f"Bearer {self.access_token}"}
@@ -59,9 +57,7 @@ class StravaAPIClient:
         headers = {"Authorization": f"Bearer {self.access_token}"}
         files = {"file": ("merged.gpx", gpx_xml, "application/gpx+xml")}
         data = {"name": name, "data_type": "gpx"}
-        res = requests.post(
-            "https://www.strava.com/api/v3/uploads", headers=headers, data=data, files=files
-        )
+        res = requests.post("https://www.strava.com/api/v3/uploads", headers=headers, data=data, files=files)
         return res.json() if res.status_code in [200, 201] else None
 
     def link_to_delete_activity(self, activity_id: int) -> str:
