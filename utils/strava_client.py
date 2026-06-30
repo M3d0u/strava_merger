@@ -69,5 +69,4 @@ class StravaAPIClient:
         headers = {"Authorization": f"Bearer {self.access_token}"}
         data = {"name": new_name}
         res = requests.put(f"https://www.strava.com/api/v3/activities/{activity_id}", headers=headers, data=data)
-        print(res.json())
         return res.json() if res.status_code in [200, 201] else None

@@ -116,8 +116,6 @@ if weight_info:
     with col_btn:
         # FIXED: Routed through service and uses the correct parameters
         if st.button("Renommer l'activité", key="auto_rename"):
-            print("old name: ", activity.name)
-            print("new name: ", new_name)
             service.rename_activity(activity.id, new_name)
             st.success("Activité renommée ! Actualisation...")
             st.cache_data.clear()
