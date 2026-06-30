@@ -50,6 +50,7 @@ def render_merge_pipeline_dialog(client: StravaAPIClient, activities_to_merge: L
     st.warning(
         "⚠️ **Strava rejette les doublons géospatiaux.** Vous devez impérativement supprimer "
         "les activités d'origine via les liens ci-dessous avant d'envoyer la nouvelle fusion."
+        "(C'est malheureusement impossible via l'api)"
     )
 
     for act in activities_to_merge:
@@ -102,16 +103,8 @@ if commute_pairs:
 
         with col_btn:
             if st.button(f"⚡ Fusionner le {date_label}", key=f"auto_merge_{idx}"):
-                with st.spinner("Consolidation en cours..."):
-                    gpx_xml = StravaActivity.merge_to_gpx(client, pair)
-                    upload_res = client.upload_gpx(gpx_xml, f"💼 Vélotaf - {date_label}")
+                render_merge_pipeline_dialog(client, pair, f"💼 Vélotaf - {date_label}")
 
-                    if upload_res and "id" in upload_res:
-                        for act in pair:
-                            act.delete(client)
-                        st.success("Succès !")
-                        st.cache_data.clear()
-                        st.rerun()
     st.divider()
 
 # ==========================================
@@ -143,19 +136,8 @@ st.divider()
 if len(selected_activities) >= 2:
     st.success(f"⚡ {len(selected_activities)} activités prêtes à être consolidées.")
     new_name = st.text_input("Nom de la nouvelle activité :", value=f"Fusion : {selected_activities[0].name}")
-    clean_old = st.checkbox("Supprimer automatiquement les activités d'origine", value=True)
 
     if st.button("🚀 Exécuter le pipeline de fusion", type="primary"):
-        with st.spinner("Génération du fichier de fusion..."):
-            gpx_xml = StravaActivity.merge_to_gpx(client, selected_activities)
-            upload_res = client.upload_gpx(gpx_xml, new_name)
-
-            if upload_res and "id" in upload_res:
-                if clean_old:
-                    for act in selected_activities:
-                        act.delete(client)
-                st.balloons()
-                st.cache_data.clear()
-                st.rerun()
+        render_merge_pipeline_dialog(client, selected_activities, new_name)
 else:
     st.info("Veuillez cocher au moins 2 activités dans le tableau ci-dessus pour activer la fusion.")
