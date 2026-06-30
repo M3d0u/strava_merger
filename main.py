@@ -1,22 +1,13 @@
 """Streamlite of the application"""
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from datetime import datetime
+from typing import List
 
 import pandas as pd
 import streamlit as st
 
-from schemas.activity import StravaActivity
-from utils.merge_helpers import (
-    detect_commute_pairs,
-    merge_activities_to_gpx,
-)
-from utils.strava_helpers import (
-    delete_activity,
-    fetch_recent_activities,
-    get_access_token,
-    upload_gpx,
-)
+from utils.domain import StravaActivity
+from utils.strava_client import StravaAPIClient
 
 st.set_page_config(page_title="Strava Activity Merger", page_icon="🏃‍♂️", layout="wide")
 
@@ -50,117 +41,86 @@ if not check_password():
     st.stop()
 
 st.title("🏃‍♂️ Strava Activity Merger")
-st.write("Sélectionnez les activités à fusionner.")
 
-token = get_access_token()
-raw_activities = fetch_recent_activities(token, limit=12)
+client = StravaAPIClient()
+raw_data = client.fetch_activities(limit=12)
 
-if not raw_activities:
-    st.error("Impossible de récupérer les activités. Vérifiez vos configurations de tokens.")
+if not raw_data:
+    st.error("Impossible de récupérer les activités.")
     st.stop()
 
-# Build du catalogue
-data_records: List[StravaActivity] = []
-for a in raw_activities:
-    activity = StravaActivity(
-        selection=False,
-        id=a["id"],
-        date=datetime.fromisoformat(a["start_date"].replace("Z", "+00:00")).strftime("%Y-%m-%d %H:%M"),
-        name=a["name"],
-        activity_type=a["type"],
-        distance_km=round(a["distance"] / 1000, 2),
-        duration=str(timedelta(seconds=a["moving_time"])),
-        raw=a,
-    )
-    data_records.append(activity.model_dump())
-
-df = pd.DataFrame(data_records)
+activities: List[StravaActivity] = [StravaActivity.from_api(a) for a in raw_data]
 
 # ==========================================
 # AUTOMATIC COMMUTE MERGE ACTION BLOC
 # ==========================================
-commute_pairs = detect_commute_pairs(raw_activities)
+commute_pairs = StravaActivity.detect_commutes(activities)
 
 if commute_pairs:
-    st.info(f"💡 **Mode Automatique** : {len(commute_pairs)} paire(s) de Vélotaf (Matin/Soir) détectée(s) !")
-
+    st.info(f"💡 **Mode Automatique** : {len(commute_pairs)} paire(s) de Vélotaf détectée(s) !")
     for idx, pair in enumerate(commute_pairs):
-        date_label = datetime.fromisoformat(pair[0]["start_date_local"].replace("Z", "")).strftime("%d/%m/%Y")
+        date_label = datetime.fromisoformat(str(pair[0].raw.get("start_date_local"))).strftime("%d/%m/%Y")
         col_info, col_btn = st.columns([3, 1])
 
         with col_info:
-            st.markdown(f"🚲 **Commute du {date_label}** ({round(pair[0]['distance']/1000, 1)}km + {round(pair[1]['distance']/1000, 1)}km)")
-            st.caption(f"Matin : {pair[0]['name']} | Soir : {pair[1]['name']}")
+            st.markdown(f"🚲 **Commute du {date_label}** ({pair[0].distance_km}km + {pair[1].distance_km}km)")
 
         with col_btn:
             if st.button(f"⚡ Fusionner le {date_label}", key=f"auto_merge_{idx}"):
-                with st.spinner(f"Consolidation du Vélotaf du {date_label}..."):
-                    auto_name = f"🚴🏻Velotaf - {date_label}"
-
-                    # Run Pipeline
-                    gpx_xml = merge_activities_to_gpx(token, pair)
-                    for act in pair:
-                        delete_activity(token, int(act["id"]))
-                    upload_res = upload_gpx(token, gpx_xml, auto_name)
+                with st.spinner("Consolidation en cours..."):
+                    gpx_xml = StravaActivity.merge_to_gpx(client, pair)
+                    upload_res = client.upload_gpx(gpx_xml, f"💼 Vélotaf - {date_label}")
 
                     if upload_res and "id" in upload_res:
-                        st.toast(f"Vélotaf du {date_label} téléversé !", icon="✅")
-                        st.balloons()
-                        st.success(f"Fait ! Commute du {date_label} traité.")
+                        for act in pair:
+                            act.delete(client)
+                        st.success("Succès !")
                         st.cache_data.clear()
                         st.rerun()
-                    else:
-                        st.error("Échec de l'upload automatique.")
     st.divider()
 
 # ==========================================
 # RENDER MANUAL TABLE
 # ==========================================
 
+display_df = pd.DataFrame([a.model_dump() for a in activities]).drop(columns=["raw", "streams"])
+
 edited_df = st.data_editor(
-    df.drop(columns=["raw"]),
-    column_config={"Sélection": st.column_config.CheckboxColumn(required=True)},
-    disabled=["ID", "Date", "Nom", "Type", "Distance (km)", "Durée"],
+    display_df,
+    column_config={
+        "selection": st.column_config.CheckboxColumn("Sélection", required=True),
+        "id": st.column_config.NumberColumn("ID", format="%d"),
+        "date": "Date",
+        "name": "Nom",
+        "activity_type": "Type",
+        "distance_km": "Distance (km)",
+        "duration": "Durée",
+    },
+    disabled=["id", "date", "name", "activity_type", "distance_km", "duration"],
     hide_index=True,
 )
 
-# Extraction des payloads originaux basés sur la sélection utilisateur
-selected_indices: List[int] = edited_df[edited_df["selection"] == True].index.tolist()
-selected_activities: List[Dict[str, Any]] = [data_records[idx]["raw"] for idx in selected_indices]
+selected_indices: List[int] = edited_df[edited_df["selection"]].index.tolist()
+selected_activities: List[StravaActivity] = [activities[idx] for idx in selected_indices]
 
 st.divider()
 
 if len(selected_activities) >= 2:
     st.success(f"⚡ {len(selected_activities)} activités prêtes à être consolidées.")
-
-    default_name = f"Fusion : {selected_activities[0]['name']}"
-    new_activity_name = st.text_input("Nom de la nouvelle activité consolidée :", value=default_name)
-
-    col1, _ = st.columns(2)
-    with col1:
-        clean_old = st.checkbox("Supprimer automatiquement les activités d'origine après fusion", value=True)
+    new_name = st.text_input("Nom de la nouvelle activité :", value=f"Fusion : {selected_activities[0].name}")
+    clean_old = st.checkbox("Supprimer automatiquement les activités d'origine", value=True)
 
     if st.button("🚀 Exécuter le pipeline de fusion", type="primary"):
-        with st.spinner("Processing des streams et génération du GPX..."):
-            gpx_xml = merge_activities_to_gpx(token, selected_activities)
-            upload_res = upload_gpx(token, gpx_xml, new_activity_name)
+        with st.spinner("Génération du fichier de fusion..."):
+            gpx_xml = StravaActivity.merge_to_gpx(client, selected_activities)
+            upload_res = client.upload_gpx(gpx_xml, new_name)
 
             if upload_res and "id" in upload_res:
-                st.toast("Fichier GPX téléversé avec succès !", icon="✅")
-
                 if clean_old:
-                    with st.spinner("Nettoyage des activités sources..."):
-                        for act in selected_activities:
-                            success = delete_activity(token, int(act["id"]))
-                            if success:
-                                st.caption(f"Activité {act['id']} supprimée.")
-                            else:
-                                st.warning(f"Échec de la suppression pour l'activité {act['id']}.")
-
+                    for act in selected_activities:
+                        act.delete(client)
                 st.balloons()
-                st.success("Opération terminée avec succès ! Vous pouvez rafraîchir l'application.")
                 st.cache_data.clear()
-            else:
-                st.error(f"Erreur lors de l'upload chez Strava : {upload_res}")
+                st.rerun()
 else:
     st.info("Veuillez cocher au moins 2 activités dans le tableau ci-dessus pour activer la fusion.")

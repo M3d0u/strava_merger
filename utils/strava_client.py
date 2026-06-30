@@ -1,0 +1,69 @@
+"""Strava api wrapper"""
+
+from typing import Any, Dict, List, Optional, cast
+import requests
+import streamlit as st
+
+
+class StravaAPIClient:
+
+    def __init__(self) -> None:
+        self.client_id: str = st.secrets["STRAVA_CLIENT_ID"]
+        self.client_secret: str = st.secrets["STRAVA_CLIENT_SECRET"]
+        self.refresh_token: str = st.secrets["STRAVA_REFRESH_TOKEN"]
+        self._access_token: Optional[str] = None
+
+    @property
+    def access_token(self) -> str:
+        """Récupère ou rafraîchit le token d'accès via le cache Streamlit."""
+        if not self._access_token:
+            self._access_token = self._refresh_access_token()
+        return cast(str, self._access_token)
+
+    @st.cache_data(ttl=3000)  # type: ignore[misc]
+    def _refresh_access_token(_self) -> str:  # _self évite que Streamlit ne cache l'instance
+        """Rotate token OAuth"""
+        payload = {
+            "client_id": _self.client_id,
+            "client_secret": _self.client_secret,
+            "refresh_token": _self.refresh_token,
+            "grant_type": "refresh_token",
+        }
+        res = requests.post("https://www.strava.com/oauth/token", data=payload)
+        if res.status_code == 200:
+            token: str = res.json()["access_token"]
+            return token
+        st.error(f"Erreur d'authentification Strava : {res.text}")
+        st.stop()
+        raise RuntimeError("Streamlit execution stopped")
+    
+    def fetch_streams(self, activity_id: int) -> Any:
+        """Retrieve activity streams"""
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        url = f"https://www.strava.com/api/v3/activities/{activity_id}/streams"
+        params = {"keys": "latlng,time,altitude,heartrate", "key_by_type": "true"}
+        res = requests.get(url, headers=headers, params=params)
+        return res.json() if res.status_code == 200 else {}
+
+    def fetch_activities(self, limit: int = 12) -> Any:
+        """Retrieve recent activities"""
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        res = requests.get(
+            f"https://www.strava.com/api/v3/athlete/activities?per_page={limit}",
+            headers=headers,
+        )
+        return res.json() if res.status_code == 200 else []
+
+    def upload_gpx(self, gpx_xml: str, name: str) -> Optional[Dict[str, Any]]:
+        """Upload GPX file to Strava"""
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        files = {"file": ("merged.gpx", gpx_xml, "application/gpx+xml")}
+        data = {"name": name, "data_type": "gpx"}
+        res = requests.post(
+            "https://www.strava.com/api/v3/uploads", headers=headers, data=data, files=files
+        )
+        return res.json() if res.status_code in [200, 201] else None
+
+    def link_to_delete_activity(self, activity_id: int) -> str:
+        """Create a direct link to delete an activity."""
+        return f"https://www.strava.com/activities/{activity_id}"

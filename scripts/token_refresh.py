@@ -9,12 +9,7 @@ CODE = ""
 
 res = requests.post(
     "https://www.strava.com/oauth/token",
-    data={
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-        "code": CODE,
-        "grant_type": "authorization_code" # Note: authorization_code, NOT refresh_token
-    }
+    data={"client_id": CLIENT_ID, "client_secret": CLIENT_SECRET, "code": CODE, "grant_type": "authorization_code"},
 )
 
 if res.status_code == 200:
@@ -22,6 +17,7 @@ if res.status_code == 200:
     print("--- SUCCESS ---")
     print(f"New Access Token: {data['access_token']}")
     print(f"New Refresh Token: {data['refresh_token']}")
-    print(f"Scopes authorized: {data['token_type']}") # Double check it shows your scopes
+    print(f"Scopes authorized: {data['token_type']}")
+    print(f"Expires in: {data['expires_at']}")
 else:
     print(f"Error: {res.text}")
