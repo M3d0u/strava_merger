@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 from datetime import time as dt_time
-from typing import Any, Dict, List
+from typing import Any
 
 import gpxpy
 import gpxpy.gpx
@@ -18,11 +18,11 @@ class StravaActivity(BaseModel):
     activity_type: str
     distance_km: float
     duration: str
-    raw: Dict[str, Any] = Field(default_factory=dict)
-    streams: Dict[str, Any] = Field(default_factory=dict)
+    raw: dict[str, Any] = Field(default_factory=dict)
+    streams: dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
-    def from_api(cls, payload: Dict[str, Any]) -> "StravaActivity":
+    def from_api(cls, payload: dict[str, Any]) -> "StravaActivity":
         """Factory to validate, transform, and instantiate schema from API data."""
         distance_meters = float(payload.get("distance", 0.0))
         moving_seconds = int(payload.get("moving_time", 0))
@@ -42,7 +42,7 @@ class StravaActivity(BaseModel):
         )
 
     @staticmethod
-    def merge_to_gpx(activities: List["StravaActivity"]) -> str:
+    def merge_to_gpx(activities: list["StravaActivity"]) -> str:
         """Pure CPU-Bound pipeline merging domain entities into a GPX XML."""
         gpx = gpxpy.gpx.GPX()
         gpx_track = gpxpy.gpx.GPXTrack()
@@ -58,10 +58,10 @@ class StravaActivity(BaseModel):
                 continue
 
             start_dt = datetime.fromisoformat(str(act.raw.get("start_date", "")).replace("Z", "+00:00"))
-            latlng: List[List[float]] = act.streams["latlng"]["data"]
-            time_offsets: List[int] = act.streams["time"]["data"]
-            altitudes: List[float | None] = act.streams.get("altitude", {}).get("data", [None] * len(latlng))
-            hr: List[int | None] = act.streams.get("heartrate", {}).get("data", [None] * len(latlng))
+            latlng: list[list[float]] = act.streams["latlng"]["data"]
+            time_offsets: list[int] = act.streams["time"]["data"]
+            altitudes: list[float | None] = act.streams.get("altitude", {}).get("data", [None] * len(latlng))
+            hr: list[int | None] = act.streams.get("heartrate", {}).get("data", [None] * len(latlng))
 
             for i in range(len(latlng)):
                 point_time = start_dt + timedelta(seconds=int(time_offsets[i]))
@@ -86,9 +86,9 @@ class StravaActivity(BaseModel):
         return str(gpx.to_xml())
 
     @staticmethod
-    def detect_commutes(activities: List["StravaActivity"]) -> List[List["StravaActivity"]] | None:
+    def detect_commutes(activities: list["StravaActivity"]) -> list[list["StravaActivity"]] | None:
         """Detect morning and evening commute windows."""
-        by_date: Dict[str, Dict[str, "StravaActivity" | None]] = {}
+        by_date: dict[str, dict[str, "StravaActivity" | None]] = {}
         m_start, m_end = dt_time(7, 50), dt_time(8, 50)
         e_start, e_end = dt_time(17, 30), dt_time(19, 0)
 
@@ -109,7 +109,7 @@ class StravaActivity(BaseModel):
             elif e_start <= act_time <= e_end:
                 by_date[date_str]["evening"] = act
 
-        pairs: List[List["StravaActivity"]] = []
+        pairs: list[list["StravaActivity"]] = []
         for pair in by_date.values():
             if pair["morning"] and pair["evening"]:
                 pairs.append([pair["morning"], pair["evening"]])
@@ -117,7 +117,7 @@ class StravaActivity(BaseModel):
         return pairs if pairs else None  # FIXED: Bug fix here (previously returned None)
 
     @staticmethod
-    def detect_WeightTraining(activities: List["StravaActivity"]) -> tuple["StravaActivity", str] | None:
+    def detect_WeightTraining(activities: list["StravaActivity"]) -> tuple["StravaActivity", str] | None:
         """Detect unnamed or default weight training sessions."""
         weight_activities = [act for act in activities if act.activity_type == "WeightTraining"]
         if not weight_activities:

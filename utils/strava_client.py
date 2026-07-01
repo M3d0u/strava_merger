@@ -1,6 +1,6 @@
 """Strava api wrapper"""
 
-from typing import Any, Dict, cast
+from typing import Any, cast
 
 import requests
 import streamlit as st
@@ -52,7 +52,7 @@ class StravaAPIClient:
         )
         return res.json() if res.status_code == 200 else []
 
-    def upload_gpx(self, gpx_xml: str, name: str) -> Dict[str, Any] | None:
+    def upload_gpx(self, gpx_xml: str, name: str) -> dict[str, Any] | None:
         """Upload GPX file to Strava"""
         headers = {"Authorization": f"Bearer {self.access_token}"}
         files = {"file": ("merged.gpx", gpx_xml, "application/gpx+xml")}

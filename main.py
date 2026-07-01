@@ -1,7 +1,6 @@
 """Streamlit user interface presentation layer."""
 
 from datetime import datetime
-from typing import List
 
 import pandas as pd
 import streamlit as st
@@ -44,7 +43,7 @@ if not check_password():
 # REUSABLE UI PIPELINE COMPONENT
 # ==========================================
 @st.dialog("🔄 Validation de la fusion")  # type: ignore[misc]
-def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: List[StravaActivity], target_name: str) -> None:
+def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: list[StravaActivity], target_name: str) -> None:
     """Launch manual deletion prompts and handle final unified processing uploads."""
     st.warning(
         "⚠️ **Strava rejette les doublons géospatiaux.** Vous devez impérativement supprimer "
@@ -142,8 +141,8 @@ edited_df = st.data_editor(
     hide_index=True,
 )
 
-selected_indices: List[int] = edited_df[edited_df["selection"]].index.tolist()
-selected_activities: List[StravaActivity] = [activities[idx] for idx in selected_indices]
+selected_indices: list[int] = edited_df[edited_df["selection"]].index.tolist()
+selected_activities: list[StravaActivity] = [activities[idx] for idx in selected_indices]
 
 st.divider()
 
