@@ -1,7 +1,5 @@
-# Features to do
-- Detection d'activité à merger :white_check_mark:
-- si merge :
-  - fusion des activités,
-  - lien direct vers les activités à supprimer,
-  - puis upload du nouveau gpx avec nom donné en amont
-- rename automatique pour les activités weightTraining :white_check_mark:
+# Strava Merger
+- Personal tools to help manager strava activities
+For now, only two features :
+- Detect activity to merge (daily bike commute)
+- rename weight activities to follow workout plan
