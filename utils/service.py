@@ -1,5 +1,7 @@
 """Application Service coordinating domain models and infrastructure clients."""
 
+import time
+
 from utils.domain import StravaActivity
 from utils.strava_client import StravaAPIClient
 
@@ -33,4 +35,20 @@ class StravaService:
         gpx_xml = StravaActivity.merge_to_gpx(activities)
 
         upload_res = self.client.upload_gpx(gpx_xml, target_name)
-        return upload_res is not None and "id" in upload_res
+        if upload_res and "id" in upload_res:
+            upload_id = upload_res["id"]
+            max_attempts = 15
+            delay_seconds = 2
+            for _ in range(max_attempts):
+                time.sleep(delay_seconds)
+                status = self.client.check_upload_status(upload_id)
+                if not status:
+                    continue
+                if status.get("error"):
+                    break
+                activity_id = status.get("activity_id")
+                if activity_id:
+                    self.client.mute_activity(activity_id)
+                    break
+            return True
+        return False

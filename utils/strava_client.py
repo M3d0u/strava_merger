@@ -70,3 +70,17 @@ class StravaAPIClient:
         data = {"name": new_name}
         res = requests.put(f"https://www.strava.com/api/v3/activities/{activity_id}", headers=headers, data=data)
         return res.json() if res.status_code in [200, 201] else None
+
+    def check_upload_status(self, upload_id: int) -> dict[str, Any] | None:
+        """Check the background processing status of an uploaded activity."""
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        url = f"https://www.strava.com/api/v3/uploads/{upload_id}"
+        res = requests.get(url, headers=headers)
+        return res.json() if res.status_code == 200 else None
+
+    def mute_activity(self, activity_id: int) -> dict[str, Any] | None:
+        """Mute the activity (hide it from home and club feeds)."""
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        data = {"hide_from_home": "true"}
+        res = requests.put(f"https://www.strava.com/api/v3/activities/{activity_id}", headers=headers, data=data)
+        return res.json() if res.status_code in [200, 201] else None

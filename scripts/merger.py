@@ -1,8 +1,9 @@
 """Script to test merger functionality."""
 
 from datetime import datetime, timedelta, timezone
-from xml.etree import ElementTree as mod_etree
 from typing import Any
+from xml.etree import ElementTree as mod_etree
+
 import gpxpy
 import gpxpy.gpx
 
@@ -26,7 +27,7 @@ def merge_to_gpx(activities: list[Any]) -> str:
         latlng: list[list[float]] = act.streams["latlng"]["data"]
         time_offsets: list[int] = act.streams["time"]["data"]
         altitudes: list[float | None] = act.streams.get("altitude", {}).get("data", [None] * len(latlng))
-        hr: list [int | None] = act.streams.get("heartrate", {}).get("data", [None] * len(latlng))
+        hr: list[int | None] = act.streams.get("heartrate", {}).get("data", [None] * len(latlng))
 
         for i in range(len(latlng)):
             point_time = start_dt + timedelta(seconds=int(time_offsets[i]))
@@ -53,21 +54,17 @@ def merge_to_gpx(activities: list[Any]) -> str:
 
 class MockActivity:
     """Mocks the domain entity structure required by merge_to_gpx."""
+
     def __init__(self, start_date: str, latlng: list, time_offsets: list, altitude: list, heartrate: list):
         self.raw = {"start_date": start_date}
-        self.streams = {
-            "latlng": {"data": latlng},
-            "time": {"data": time_offsets},
-            "altitude": {"data": altitude},
-            "heartrate": {"data": heartrate}
-        }
+        self.streams = {"latlng": {"data": latlng}, "time": {"data": time_offsets}, "altitude": {"data": altitude}, "heartrate": {"data": heartrate}}
 
 
 def load_gpx_as_mock_activity(file_path: str) -> MockActivity:
     """Parses an existing GPX file and extracts data streams for the mock object."""
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         gpx = gpxpy.parse(f)
-    
+
     latlng, time_offsets, altitude, heartrate = [], [], [], []
     start_time = None
 
@@ -78,10 +75,10 @@ def load_gpx_as_mock_activity(file_path: str) -> MockActivity:
                 # Establish global baseline start time for calculating relative offsets
                 if start_time is None and point.time:
                     start_time = point.time
-                
+
                 latlng.append([point.latitude, point.longitude])
                 altitude.append(point.elevation)
-                
+
                 # Calculate time offset in seconds from the start
                 if point.time and start_time:
                     offset = int((point.time - start_time).total_seconds())
@@ -94,7 +91,7 @@ def load_gpx_as_mock_activity(file_path: str) -> MockActivity:
                 if point.extensions:
                     for ext in point.extensions:
                         # Search for <hr> tags inside Garmin's XML namespace
-                        hr_elements = ext.findall('.//{http://www.garmin.com/xmlschemas/TrackPointExtension/v1}hr')
+                        hr_elements = ext.findall(".//{http://www.garmin.com/xmlschemas/TrackPointExtension/v1}hr")
                         if hr_elements:
                             try:
                                 hr_val = int(hr_elements[0].text)
@@ -108,17 +105,11 @@ def load_gpx_as_mock_activity(file_path: str) -> MockActivity:
         start_time = datetime.now(timezone.utc)
         time_offsets = [0] * len(latlng)
 
-    return MockActivity(
-        start_date=start_time.isoformat(),
-        latlng=latlng,
-        time_offsets=time_offsets,
-        altitude=altitude,
-        heartrate=heartrate
-    )
+    return MockActivity(start_date=start_time.isoformat(), latlng=latlng, time_offsets=time_offsets, altitude=altitude, heartrate=heartrate)
 
 
 if __name__ == "__main__":
-    gpx_file_1 = "testfiles/Afternoon_Ride.gpx"  
+    gpx_file_1 = "testfiles/Afternoon_Ride.gpx"
     gpx_file_2 = "testfiles/Morning_Ride.gpx"
     output_gpx_file = "testfiles/merged_output.gpx"
 
@@ -127,15 +118,15 @@ if __name__ == "__main__":
         activity_1 = load_gpx_as_mock_activity(gpx_file_1)
         activity_2 = load_gpx_as_mock_activity(gpx_file_2)
         activities_list = [activity_1, activity_2]
-        
+
         print("Running your `merge_to_gpx` pipeline...")
         merged_xml_string = merge_to_gpx(activities_list)
-        
+
         print(f"Saving output to {output_gpx_file}...")
         with open(output_gpx_file, "w") as out_file:
             out_file.write(merged_xml_string)
-            
+
         print("Success! GPX files merged efficiently.")
-        
+
     except FileNotFoundError as e:
         print(f"Error: Could not find files. Please check paths. Detailed error: {e}")

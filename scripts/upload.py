@@ -1,24 +1,26 @@
 """Script to test upload functionality."""
 
 import os
-from typing import Any
-import requests
 import time
+from typing import Any
+
+import requests
 
 try:
     import tomllib
 except ImportError:
     tomllib = None
 
+
 # ==========================================
 # 1. SECRETS LOADER
 # ==========================================
 def load_streamlit_secrets() -> dict:
     secrets_path = os.path.join(".streamlit", "secrets.toml")
-    
+
     if not os.path.exists(secrets_path):
         raise FileNotFoundError(f"Could not find secrets file at: {secrets_path}")
-        
+
     if tomllib:
         with open(secrets_path, "rb") as f:
             return tomllib.load(f)
@@ -50,9 +52,9 @@ class StravaClient:
             "client_id": self.client_id,
             "client_secret": self.client_secret,
             "refresh_token": self.refresh_token,
-            "grant_type": "refresh_token"
+            "grant_type": "refresh_token",
         }
-        
+
         res = requests.post(token_url, data=payload)
         if res.status_code == 200:
             self.access_token = res.json().get("access_token")
@@ -69,7 +71,6 @@ class StravaClient:
         res = requests.post("https://www.strava.com/api/v3/uploads", headers=headers, data=data, files=files)
         print(f"Upload response ({res.status_code}): {res.text}")
         return res.json() if res.status_code in [200, 201] else None
-    
 
     def check_upload_status(self, upload_id: int) -> dict[str, Any] | None:
         """Check the background processing status of an uploaded activity."""
@@ -83,9 +84,9 @@ class StravaClient:
 # 3. EXECUTION DISPATCHER
 # ==========================================
 if __name__ == "__main__":
-    FILE_PATH_TO_UPLOAD = "testfiles/merged_output.gpx" 
+    FILE_PATH_TO_UPLOAD = "testfiles/merged_output.gpx"
     UPLOAD_ACTIVITY_NAME = "Automated Pure Python Run 🏃"
-    
+
     print("Reading Streamlit secrets file...")
     try:
         toml_secrets = load_streamlit_secrets()
@@ -127,7 +128,7 @@ if __name__ == "__main__":
     for attempt in range(1, max_attempts + 1):
         time.sleep(delay_seconds)
         status_payload = client.check_upload_status(upload_id)
-        
+
         if not status_payload:
             print("⚠️ Warning: Could not fetch status on this frame.")
             continue
@@ -141,7 +142,7 @@ if __name__ == "__main__":
         if error_msg:
             print(f"\n❌ Strava Processing Error: {error_msg}")
             break
-            
+
         if activity_id:
             print("\n🎉 Done! The activity has been fully processed.")
             print(f"🔗 Strava Link: https://www.strava.com/activities/{activity_id}")
