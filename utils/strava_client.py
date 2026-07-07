@@ -58,7 +58,10 @@ class StravaAPIClient:
         files = {"file": ("merged.gpx", gpx_xml, "application/gpx+xml")}
         data = {"name": name, "data_type": "gpx"}
         res = requests.post("https://www.strava.com/api/v3/uploads", headers=headers, data=data, files=files)
-        return res.json() if res.status_code in [200, 201] else None
+        try:
+            return cast(dict[str, Any], res.json())
+        except Exception:
+            return None
 
     def link_to_delete_activity(self, activity_id: int) -> str:
         """Create a direct link to delete an activity."""
@@ -76,7 +79,10 @@ class StravaAPIClient:
         headers = {"Authorization": f"Bearer {self.access_token}"}
         url = f"https://www.strava.com/api/v3/uploads/{upload_id}"
         res = requests.get(url, headers=headers)
-        return res.json() if res.status_code == 200 else None
+        try:
+            return cast(dict[str, Any], res.json())
+        except Exception:
+            return None
 
     def mute_activity(self, activity_id: int) -> dict[str, Any] | None:
         """Mute the activity (hide it from home and club feeds)."""

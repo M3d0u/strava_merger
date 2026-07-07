@@ -59,13 +59,15 @@ def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: li
 
     if st.button("🚀 Confirmer & Téléverser la fusion", type="primary", use_container_width=True):
         with st.spinner("Génération du GPX et synchronisation..."):
-            success = service.merge_and_upload(activities_to_merge, target_name)
+            success, error_msg = service.merge_and_upload(activities_to_merge, target_name)
             if success:
                 st.success("Nouvelle activité consolidée créée avec succès ! 🎉")
                 st.cache_data.clear()
                 st.rerun()
             else:
                 st.error("Une erreur est survenue lors de l'envoi vers Strava.")
+                if error_msg:
+                    st.error(f"⚠️ **Détails de l'erreur :** {error_msg}")
 
 
 st.title("🏃‍♂️ Strava Activity Merger")
@@ -85,7 +87,7 @@ if not activities:
 commute_pairs = StravaActivity.detect_commutes(activities)
 
 if commute_pairs:
-    st.info(f"💡 **Mode Automatique** : {len(commute_pairs)} paire(s) de Vélotaf détectée(s) !")
+    st.info(f"💡 {len(commute_pairs)} paire(s) de Vélotaf détectée(s) !")
     for idx, pair in enumerate(commute_pairs):
         date_label = datetime.fromisoformat(str(pair[0].raw.get("start_date_local"))).strftime("%d/%m/%Y")
         col_info, col_btn = st.columns([3, 1])
@@ -107,7 +109,7 @@ weight_info = StravaActivity.detect_WeightTraining(activities)
 
 if weight_info:
     activity, new_name = weight_info
-    st.info("💡 **Mode Automatique** : Activité muscu à renommer détectée !")
+    st.info("💡 Activité muscu à renommer détectée !")
     col_info, col_btn = st.columns([3, 1])
 
     with col_info:
