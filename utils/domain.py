@@ -1,12 +1,14 @@
 """Pydantic schema and domain entity representing a strava activity."""
 
+from __future__ import annotations
+
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from datetime import time as dt_time
 from typing import Any
 
 import gpxpy
 import gpxpy.gpx
-from lxml import etree as mod_etree
 from pydantic import BaseModel, Field
 
 
@@ -22,7 +24,7 @@ class StravaActivity(BaseModel):
     streams: dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
-    def from_api(cls, payload: dict[str, Any]) -> "StravaActivity":
+    def from_api(cls, payload: dict[str, Any]) -> StravaActivity:
         """Factory to validate, transform, and instantiate schema from API data."""
         distance_meters = float(payload.get("distance", 0.0))
         moving_seconds = int(payload.get("moving_time", 0))
@@ -42,9 +44,13 @@ class StravaActivity(BaseModel):
         )
 
     @staticmethod
-    def merge_to_gpx(activities: list["StravaActivity"]) -> str:
+    def merge_to_gpx(activities: list[StravaActivity]) -> str:
         """Pure CPU-Bound pipeline merging domain entities into a GPX XML."""
         gpx = gpxpy.gpx.GPX()
+
+        # Register Garmin extension namespace properly at the root level to keeps the XML clean and fully compatible with Strava's parser
+        gpx.nsmap["gpxtpx"] = "http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
+
         gpx_track = gpxpy.gpx.GPXTrack()
         gpx.tracks.append(gpx_track)
 
@@ -54,7 +60,8 @@ class StravaActivity(BaseModel):
             gpx_segment = gpxpy.gpx.GPXTrackSegment()
             gpx_track.segments.append(gpx_segment)
 
-            if "latlng" not in act.streams:
+            # Ensure both latlng and time streams exist before proceeding
+            if "latlng" not in act.streams or "time" not in act.streams:
                 continue
 
             start_dt = datetime.fromisoformat(str(act.raw.get("start_date", "")).replace("Z", "+00:00"))
@@ -63,7 +70,10 @@ class StravaActivity(BaseModel):
             altitudes: list[float | None] = act.streams.get("altitude", {}).get("data", [None] * len(latlng))
             hr: list[int | None] = act.streams.get("heartrate", {}).get("data", [None] * len(latlng))
 
-            for i in range(len(latlng)):
+            # Defensive check to avoid index mismatch errors
+            num_points = min(len(latlng), len(time_offsets))
+
+            for i in range(num_points):
                 point_time = start_dt + timedelta(seconds=int(time_offsets[i]))
                 point = gpxpy.gpx.GPXTrackPoint(
                     latitude=latlng[i][0],
@@ -72,11 +82,12 @@ class StravaActivity(BaseModel):
                     time=point_time,
                 )
 
+                # Use standard xml.etree.ElementTree instead of lxml
                 heartrate_value = hr[i]
                 if heartrate_value is not None:
                     ns_url = "http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
-                    ext_element = mod_etree.Element(f"{{{ns_url}}}TrackPointExtension")
-                    hr_element = mod_etree.Element(f"{{{ns_url}}}hr")
+                    ext_element = ET.Element(f"{{{ns_url}}}TrackPointExtension")
+                    hr_element = ET.Element(f"{{{ns_url}}}hr")
                     hr_element.text = str(int(heartrate_value))
                     ext_element.append(hr_element)
                     point.extensions.append(ext_element)
@@ -86,9 +97,9 @@ class StravaActivity(BaseModel):
         return str(gpx.to_xml())
 
     @staticmethod
-    def detect_commutes(activities: list["StravaActivity"]) -> list[list["StravaActivity"]] | None:
+    def detect_commutes(activities: list[StravaActivity]) -> list[list[StravaActivity]] | None:
         """Detect morning and evening commute windows."""
-        by_date: dict[str, dict[str, "StravaActivity" | None]] = {}
+        by_date: dict[str, dict[str, StravaActivity | None]] = {}
         m_start, m_end = dt_time(7, 50), dt_time(8, 50)
         e_start, e_end = dt_time(17, 30), dt_time(19, 0)
 
@@ -109,7 +120,7 @@ class StravaActivity(BaseModel):
             elif e_start <= act_time <= e_end:
                 by_date[date_str]["evening"] = act
 
-        pairs: list[list["StravaActivity"]] = []
+        pairs: list[list[StravaActivity]] = []
         for pair in by_date.values():
             if pair["morning"] and pair["evening"]:
                 pairs.append([pair["morning"], pair["evening"]])
@@ -117,7 +128,7 @@ class StravaActivity(BaseModel):
         return pairs if pairs else None  # FIXED: Bug fix here (previously returned None)
 
     @staticmethod
-    def detect_WeightTraining(activities: list["StravaActivity"]) -> tuple["StravaActivity", str] | None:
+    def detect_WeightTraining(activities: list[StravaActivity]) -> tuple[StravaActivity, str] | None:
         """Detect unnamed or default weight training sessions."""
         weight_activities = [act for act in activities if act.activity_type == "WeightTraining"]
         if not weight_activities:
