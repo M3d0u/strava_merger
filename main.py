@@ -1,6 +1,7 @@
 """Streamlit user interface presentation layer."""
 
 from datetime import datetime
+
 import pandas as pd
 import streamlit as st
 
@@ -8,22 +9,20 @@ from utils.domain import StravaActivity
 from utils.service import StravaService
 
 # Set modern, wide page layout
-st.set_page_config(
-    page_title="Strava Activity Merger", 
-    page_icon="🏃‍♂️", 
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+st.set_page_config(page_title="Strava Activity Merger", page_icon="🏃‍♂️", layout="wide", initial_sidebar_state="collapsed")
 
 # Custom minimalistic CSS to elevate native Streamlit elements
-st.markdown("""
+st.markdown(
+    """
     <style>
     /* Clean up block padding */
     .block-container { padding-top: 2rem; padding-bottom: 2rem; }
     /* Soften background elements */
     div[data-testid="stExpander"], div[data-testid="element-container"] { border-radius: 8px; }
     </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 # ==========================================
@@ -72,16 +71,12 @@ def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: li
     st.write("### 1. Supprimer les doublons d'origine")
     for act in activities_to_merge:
         delete_url = service.get_delete_url(act)
-        st.link_button(
-            f"🗑️ Supprimer : {act.name} ({act.distance_km} km)", 
-            url=delete_url, 
-            use_container_width=True
-        )
+        st.link_button(f"🗑️ Supprimer : {act.name} ({act.distance_km} km)", url=delete_url, use_container_width=True)
 
     st.divider()
     st.write("### 2. Finaliser la synchronisation")
     st.caption("Une fois les suppressions validées sur votre profil Strava, lancez la création :")
-    
+
     if st.button("🚀 Confirmer & Téléverser la fusion", type="primary", use_container_width=True):
         with st.spinner("Génération du GPX et synchronisation..."):
             success, error_msg = service.merge_and_upload(activities_to_merge, target_name)
@@ -124,28 +119,28 @@ weight_info = StravaActivity.detect_WeightTraining(activities)
 # ==========================================
 if commute_pairs or weight_info:
     st.subheader("💡 Actions Recommandées")
-    
+
     # Process Automated Commutes
     if commute_pairs:
         with st.container(border=True):
             st.markdown("#### 🚲 Fusions Vélotaf Détectées")
             for idx, pair in enumerate(commute_pairs):
                 date_label = datetime.fromisoformat(str(pair[0].raw.get("start_date_local"))).strftime("%d/%m/%Y")
-                col_info, col_btn = st.columns([3, 1], vertical_alignment="middle")
-                
+                col_info, col_btn = st.columns([3, 1], vertical_alignment="center")
+
                 with col_info:
                     st.markdown(f"**Trajet du {date_label}**  \n`Aller/Retour : {pair[0].distance_km} km + {pair[1].distance_km} km`")
                 with col_btn:
-                    if st.button(f"⚡ Fusionner", key=f"auto_merge_{idx}", use_container_width=True):
+                    if st.button("⚡ Fusionner", key=f"auto_merge_{idx}", use_container_width=True):
                         render_merge_pipeline_dialog(service, pair, f"💼 Vélotaf - {date_label}")
-    
+
     # Process Weight Training Shortcuts
     if weight_info:
         activity, new_name = weight_info
         with st.container(border=True):
             st.markdown("#### 💪 Renommage Musculation")
-            col_info, col_btn = st.columns([3, 1], vertical_alignment="middle")
-            
+            col_info, col_btn = st.columns([3, 1], vertical_alignment="center")
+
             with col_info:
                 st.markdown(f"Activité générique détectée :  \n`Renommer vers : {new_name}`")
             with col_btn:
@@ -194,13 +189,10 @@ if len(selected_activities) >= 2:
     st.write("")
     with st.container(border=True):
         st.markdown(f"### ⚡ Consolider les {len(selected_activities)} activités sélectionnées")
-        
+
         col_input, col_action = st.columns([2, 1], vertical_alignment="bottom")
         with col_input:
-            new_name = st.text_input(
-                "Nom personnalisé pour l'activité finale :", 
-                value=f"Fusion : {selected_activities[0].name}"
-            )
+            new_name = st.text_input("Nom personnalisé pour l'activité finale :", value=f"Fusion : {selected_activities[0].name}")
         with col_action:
             if st.button("🚀 Ouvrir le pipeline de fusion", type="primary", use_container_width=True):
                 render_merge_pipeline_dialog(service, selected_activities, new_name)
