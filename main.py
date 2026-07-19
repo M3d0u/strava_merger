@@ -188,11 +188,11 @@ selected_activities = [activities[idx] for idx in selected_indices]
 if len(selected_activities) >= 2:
     st.write("")
     with st.container(border=True):
-        st.markdown(f"### ⚡ Consolider les {len(selected_activities)} activités sélectionnées")
+        st.markdown(f"### ⚡ Fusionner les {len(selected_activities)} activités sélectionnées")
 
         col_input, col_action = st.columns([2, 1], vertical_alignment="bottom")
         with col_input:
-            new_name = st.text_input("Nom personnalisé pour l'activité finale :", value=f"Fusion : {selected_activities[0].name}")
+            new_name = st.text_input("Nom pour l'activité finale :", value=f"Fusion : {selected_activities[0].name}")
         with col_action:
-            if st.button("🚀 Ouvrir le pipeline de fusion", type="primary", use_container_width=True):
+            if st.button("🚀 Lancer la fusion", type="primary", use_container_width=True):
                 render_merge_pipeline_dialog(service, selected_activities, new_name)
