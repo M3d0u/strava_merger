@@ -44,7 +44,7 @@ def check_password() -> bool:
         with st.container(border=True):
             st.markdown("### 🔒 Accès réservé")
             password_input = st.text_input("Mot de passe de l'application :", type="password")
-            if st.button("Se connecter", type="primary", use_container_width=True):
+            if st.button("Se connecter", type="primary", width="stretch"):
                 if password_input == st.secrets["APP_PASSWORD"]:
                     st.session_state.password_correct = True
                     st.rerun()
@@ -58,36 +58,103 @@ if not check_password():
 
 
 # ==========================================
+# REUSABLE UI PIPELINE COMPONENT HELPERS
+# ==========================================
+def render_merged_gpx_download_button(activities_to_merge: list[StravaActivity], target_name: str, key: str | None = None) -> None:
+    """Render a download button for the compiled merged GPX file."""
+    try:
+        merged_gpx = StravaActivity.merge_to_gpx(activities_to_merge)
+        st.download_button(
+            label="📥 Télécharger le GPX fusionné",
+            data=merged_gpx,
+            file_name=f"{target_name.replace(' ', '_')}.gpx",
+            mime="application/gpx+xml",
+            width="stretch",
+            key=key,
+        )
+    except Exception as e:
+        st.error(f"Impossible de générer le GPX fusionné : {e}")
+
+
+def render_success_view(dialog_success_key: str, activities_to_merge: list[StravaActivity], target_name: str) -> None:
+    """Render the success message and download button for the merged GPX."""
+    st.success("Nouvelle activité consolidée créée avec succès ! 🎉")
+    render_merged_gpx_download_button(activities_to_merge, target_name, key="success_upload_gpx_download")
+
+    if st.button("🔄 Rafraîchir la page", type="primary", width="stretch"):
+        del st.session_state[dialog_success_key]
+        st.cache_data.clear()
+        st.rerun()
+
+
+def render_activities_actions(activities_to_merge: list[StravaActivity], service: StravaService) -> None:
+    """Render delete links and GPX download buttons for original activities."""
+    for act in activities_to_merge:
+        col_del, col_dl = st.columns([1, 1])
+        with col_del:
+            delete_url = service.get_delete_url(act)
+            st.link_button(f"🗑️ Supprimer : {act.name} ({act.distance_km} km)", url=delete_url, width="stretch")
+        with col_dl:
+            try:
+                gpx_data = StravaActivity.merge_to_gpx([act])
+                st.download_button(
+                    label=f"📥 Télécharger GPX : {act.name}",
+                    data=gpx_data,
+                    file_name=f"{act.name.replace(' ', '_')}_{act.id}.gpx",
+                    mime="application/gpx+xml",
+                    width="stretch",
+                )
+            except Exception as e:
+                st.error(f"Impossible de générer le GPX de {act.name} : {e}")
+
+
+# ==========================================
 # REUSABLE UI PIPELINE COMPONENT
 # ==========================================
 @st.dialog("🔄 Validation de la fusion", width="large")  # type: ignore[misc]
 def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: list[StravaActivity], target_name: str) -> None:
     """Launch manual deletion prompts and handle final unified processing uploads."""
+    # Ensure a state variable to track the merge success of the current dialog session
+    dialog_success_key = f"merge_success_{'-'.join(str(act.id) for act in activities_to_merge)}"
+    if dialog_success_key not in st.session_state:
+        st.session_state[dialog_success_key] = False
+
+    if st.session_state[dialog_success_key]:
+        render_success_view(dialog_success_key, activities_to_merge, target_name)
+        st.stop()
+
+    # Pre-fetch streams if they aren't loaded to enable individual GPX downloads
+    for act in activities_to_merge:
+        if not act.streams:
+            with st.spinner(f"Récupération des données pour {act.name}..."):
+                act.streams = service.client.fetch_streams(act.id)
+
     st.warning(
         "⚠️ **Strava rejette les doublons géospatiaux.** Vous devez impérativement supprimer "
         "les activités d'origine via les liens ci-dessous avant d'envoyer la nouvelle fusion."
     )
 
-    st.write("### 1. Supprimer les doublons d'origine")
-    for act in activities_to_merge:
-        delete_url = service.get_delete_url(act)
-        st.link_button(f"🗑️ Supprimer : {act.name} ({act.distance_km} km)", url=delete_url, use_container_width=True)
+    st.write("### 1. Sauvegarder et Supprimer les doublons d'origine")
+    render_activities_actions(activities_to_merge, service)
 
     st.divider()
     st.write("### 2. Finaliser la synchronisation")
     st.caption("Une fois les suppressions validées sur votre profil Strava, lancez la création :")
 
-    if st.button("🚀 Confirmer & Téléverser la fusion", type="primary", use_container_width=True):
+    if st.button("🚀 Confirmer & lancer la fusion", type="primary", width="stretch"):
         with st.spinner("Génération du GPX et synchronisation..."):
             success, error_msg = service.merge_and_upload(activities_to_merge, target_name)
             if success:
-                st.success("Nouvelle activité consolidée créée avec succès ! 🎉")
-                st.cache_data.clear()
+                st.session_state[dialog_success_key] = True
                 st.rerun()
             else:
                 st.error("Une erreur est survenue lors de l'envoi vers Strava.")
                 if error_msg:
                     st.error(f"⚠️ **Détails de l'erreur :** {error_msg}")
+
+                # Allow download of the compiled GPX even if upload failed
+                st.warning("📥 **Vous pouvez tout de même télécharger le fichier GPX fusionné ci-dessous :**")
+                render_merged_gpx_download_button(activities_to_merge, target_name, key="failed_upload_gpx_download")
 
 
 # ==========================================
@@ -131,7 +198,7 @@ if commute_pairs or weight_info:
                 with col_info:
                     st.markdown(f"**Trajet du {date_label}**  \n`Aller/Retour : {pair[0].distance_km} km + {pair[1].distance_km} km`")
                 with col_btn:
-                    if st.button("⚡ Fusionner", key=f"auto_merge_{idx}", use_container_width=True):
+                    if st.button("⚡ Fusionner", key=f"auto_merge_{idx}", width="stretch"):
                         render_merge_pipeline_dialog(service, pair, f"💼 Vélotaf - {date_label}")
 
     # Process Weight Training Shortcuts
@@ -144,7 +211,7 @@ if commute_pairs or weight_info:
             with col_info:
                 st.markdown(f"Activité générique détectée :  \n`Renommer vers : {new_name}`")
             with col_btn:
-                if st.button("🏷️ Renommer", key="auto_rename", use_container_width=True):
+                if st.button("🏷️ Renommer", key="auto_rename", width="stretch"):
                     service.rename_activity(activity.id, new_name)
                     st.success("Activité mise à jour !")
                     st.cache_data.clear()
@@ -177,7 +244,7 @@ edited_df = st.data_editor(
     },
     disabled=["id", "date", "name", "activity_type", "distance_km", "duration"],
     hide_index=True,
-    use_container_width=True,
+    width="stretch",
 )
 
 # Extract dynamic selections
@@ -194,5 +261,5 @@ if len(selected_activities) >= 2:
         with col_input:
             new_name = st.text_input("Nom pour l'activité finale :", value=f"Fusion : {selected_activities[0].name}")
         with col_action:
-            if st.button("🚀 Lancer la fusion", type="primary", use_container_width=True):
+            if st.button("🚀 Lancer la fusion", type="primary", width="stretch"):
                 render_merge_pipeline_dialog(service, selected_activities, new_name)

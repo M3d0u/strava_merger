@@ -35,9 +35,10 @@ class StravaAPIClient:
             return token
         return None
 
-    def fetch_streams(self, activity_id: int) -> Any:
+    @st.cache_data(ttl=600)  # type: ignore[misc]
+    def fetch_streams(_self, activity_id: int) -> Any:
         """Retrieve activity streams"""
-        headers = {"Authorization": f"Bearer {self.access_token}"}
+        headers = {"Authorization": f"Bearer {_self.access_token}"}
         url = f"https://www.strava.com/api/v3/activities/{activity_id}/streams"
         params = {"keys": "latlng,time,altitude,heartrate", "key_by_type": "true"}
         res = requests.get(url, headers=headers, params=params)

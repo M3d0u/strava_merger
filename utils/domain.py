@@ -21,7 +21,7 @@ class StravaActivity(BaseModel):
     distance_km: float
     duration: str
     raw: dict[str, Any] = Field(default_factory=dict)
-    streams: dict[str, Any] = Field(default_factory=dict)
+    streams: list[Any] | dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
     def from_api(cls, payload: dict[str, Any]) -> StravaActivity:
@@ -44,6 +44,27 @@ class StravaActivity(BaseModel):
         )
 
     @staticmethod
+    def _normalize_streams(streams: Any) -> dict[str, Any]:
+        """Normalize streams to always be a dict of streams keyed by type."""
+        if not streams:
+            return {}
+        if isinstance(streams, dict):
+            if "type" in streams and "data" in streams:
+                type_val = streams.get("type")
+                if isinstance(type_val, str):
+                    return {type_val: streams}
+            return streams
+        if isinstance(streams, list):
+            normalized = {}
+            for stream in streams:
+                if isinstance(stream, dict) and "type" in stream:
+                    type_val = stream.get("type")
+                    if isinstance(type_val, str):
+                        normalized[type_val] = stream
+            return normalized
+        return {}
+
+    @staticmethod
     def merge_to_gpx(activities: list[StravaActivity]) -> str:
         """Pure CPU-Bound pipeline merging domain entities into a GPX XML."""
         gpx = gpxpy.gpx.GPX()
@@ -57,21 +78,27 @@ class StravaActivity(BaseModel):
         sorted_acts = sorted(activities, key=lambda x: str(x.raw.get("start_date", "")))
 
         for act in sorted_acts:
-            gpx_segment = gpxpy.gpx.GPXTrackSegment()
-            gpx_track.segments.append(gpx_segment)
+            streams_dict = StravaActivity._normalize_streams(act.streams)
 
-            # Ensure both latlng and time streams exist before proceeding
-            if "latlng" not in act.streams or "time" not in act.streams:
-                continue
+            if "latlng" not in streams_dict or "time" not in streams_dict:
+                raise ValueError(
+                    f"L'activité '{act.name}' ne contient pas de données de tracé ou de temps (flux de données incomplets). "
+                    "Impossible de procéder à la fusion."
+                )
 
             start_dt = datetime.fromisoformat(str(act.raw.get("start_date", "")).replace("Z", "+00:00"))
-            latlng: list[list[float]] = act.streams["latlng"]["data"]
-            time_offsets: list[int] = act.streams["time"]["data"]
-            altitudes: list[float | None] = act.streams.get("altitude", {}).get("data", [None] * len(latlng))
-            hr: list[int | None] = act.streams.get("heartrate", {}).get("data", [None] * len(latlng))
+            latlng: list[list[float]] = streams_dict["latlng"]["data"]
+            time_offsets: list[int] = streams_dict["time"]["data"]
+            altitudes: list[float | None] = streams_dict.get("altitude", {}).get("data", [None] * len(latlng))
+            hr: list[int | None] = streams_dict.get("heartrate", {}).get("data", [None] * len(latlng))
 
             # Defensive check to avoid index mismatch errors
             num_points = min(len(latlng), len(time_offsets))
+            if num_points == 0:
+                raise ValueError(f"L'activité '{act.name}' ne contient aucun point de tracé valide.")
+
+            gpx_segment = gpxpy.gpx.GPXTrackSegment()
+            gpx_track.segments.append(gpx_segment)
 
             for i in range(num_points):
                 point_time = start_dt + timedelta(seconds=int(time_offsets[i]))
@@ -93,6 +120,9 @@ class StravaActivity(BaseModel):
                     point.extensions.append(ext_element)
 
                 gpx_segment.points.append(point)
+
+        if gpx.get_track_points_no() == 0:
+            raise ValueError("Le fichier GPX généré ne contient aucun point de tracé.")
 
         return str(gpx.to_xml())
 

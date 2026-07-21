@@ -82,7 +82,10 @@ class StravaService:
             if not act.streams:
                 act.streams = self.client.fetch_streams(act.id)
 
-        gpx_xml = StravaActivity.merge_to_gpx(activities)
+        try:
+            gpx_xml = StravaActivity.merge_to_gpx(activities)
+        except ValueError as e:
+            return False, str(e)
 
         max_upload_attempts = 3
         base_retry_delay = 5
