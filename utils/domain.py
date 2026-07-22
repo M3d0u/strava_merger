@@ -25,7 +25,13 @@ class StravaActivity(BaseModel):
 
     @classmethod
     def from_api(cls, payload: dict[str, Any]) -> StravaActivity:
-        """Factory to validate, transform, and instantiate schema from API data."""
+        """Factory to validate, transform, and instantiate schema from API data.
+        
+        Args:
+            payload (dict[str, Any]): Raw activity data from Strava API.
+        Returns:
+            StravaActivity: An instance of the StravaActivity class initialized with the validated and transformed data.
+        """
         distance_meters = float(payload.get("distance", 0.0))
         moving_seconds = int(payload.get("moving_time", 0))
 
@@ -45,7 +51,13 @@ class StravaActivity(BaseModel):
 
     @staticmethod
     def _normalize_streams(streams: Any) -> dict[str, Any]:
-        """Normalize streams to always be a dict of streams keyed by type."""
+        """Normalize streams to always be a dict of streams keyed by type.
+        
+        Args:
+            streams (Any): The raw streams data from the Strava API, which can be a list or a dict.
+        Returns:
+            dict[str, Any]: A normalized dictionary of streams keyed by their type.
+        """
         if not streams:
             return {}
         if isinstance(streams, dict):
@@ -66,7 +78,14 @@ class StravaActivity(BaseModel):
 
     @staticmethod
     def merge_to_gpx(activities: list[StravaActivity]) -> str:
-        """Pure CPU-Bound pipeline merging domain entities into a GPX XML."""
+        """Pure CPU-Bound pipeline merging domain entities into a GPX XML.
+        
+        Args:
+            activities (list[StravaActivity]): List of StravaActivity instances to merge.
+            
+        Returns:
+            str: A string representation of the merged GPX XML.
+        """
         gpx = gpxpy.gpx.GPX()
 
         # Register Garmin extension namespace properly at the root level to keeps the XML clean and fully compatible with Strava's parser
@@ -128,7 +147,15 @@ class StravaActivity(BaseModel):
 
     @staticmethod
     def detect_commutes(activities: list[StravaActivity]) -> list[list[StravaActivity]] | None:
-        """Detect morning and evening commute windows."""
+        """Detect morning and evening commute windows.
+        
+        Args:
+            activities (list[StravaActivity]): List of StravaActivity instances.
+            
+        Returns:
+            list[list[StravaActivity]] | None: Returns a list of pairs of StravaActivity 
+            instances representing morning and evening commutes, or None if no pairs are found.
+        """
         by_date: dict[str, dict[str, StravaActivity | None]] = {}
         m_start, m_end = dt_time(7, 50), dt_time(8, 50)
         e_start, e_end = dt_time(17, 30), dt_time(19, 0)
@@ -155,11 +182,18 @@ class StravaActivity(BaseModel):
             if pair["morning"] and pair["evening"]:
                 pairs.append([pair["morning"], pair["evening"]])
 
-        return pairs if pairs else None  # FIXED: Bug fix here (previously returned None)
+        return pairs if pairs else None
 
     @staticmethod
     def detect_WeightTraining(activities: list[StravaActivity]) -> tuple[StravaActivity, str] | None:
-        """Detect unnamed or default weight training sessions."""
+        """Detect unnamed or default weight training sessions.
+        
+        Args:
+            activities (list[StravaActivity]): List of StravaActivity instances.
+            
+        Returns:
+            tuple[StravaActivity, str] | None: Returns a tuple containing the most recent
+            weight training activity and the new name to assign, or None if no renaming is needed."""
         weight_activities = [act for act in activities if act.activity_type == "WeightTraining"]
         if not weight_activities:
             return None
@@ -172,4 +206,23 @@ class StravaActivity(BaseModel):
             new_name = "🏋️‍♀️ Push" if has_prev_pull else "🏋️‍♀️ Pull"
             return most_recent_activity, new_name
 
+        return None
+    
+    @staticmethod
+    def detect_Run(activities: list[StravaActivity]) -> tuple[StravaActivity, str, str] | None:
+        """Detect running activities.
+        
+        Args:
+            activities (list[StravaActivity]): List of StravaActivity instances.
+            
+        Returns:
+            tuple[StravaActivity, str, str] | None: Returns a tuple containing the running activity, 
+            its future name and meteo description, or None if no running activities are found.
+        """
+        run_activities = [act for act in activities if act.activity_type == "Run"]
+        for run_act in run_activities:
+            if "🏃‍♂️" not in run_act.name:
+                future_name = f"🏃‍♂️ {run_act.name}"
+                meteo_desc = "TO DEFINE"  # Placeholder for future meteo description logic
+                return run_act, future_name, meteo_desc
         return None

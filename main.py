@@ -179,15 +179,15 @@ if not activities:
 # Detect automated workflow opportunities
 commute_pairs = StravaActivity.detect_commutes(activities)
 weight_info = StravaActivity.detect_WeightTraining(activities)
+run_activities = StravaActivity.detect_Run(activities)
 
 
 # ==========================================
 # SECTION: SMART SUGGESTIONS
 # ==========================================
-if commute_pairs or weight_info:
+if commute_pairs or weight_info or run_activities:
     st.subheader("💡 Actions Recommandées")
 
-    # Process Automated Commutes
     if commute_pairs:
         with st.container(border=True):
             st.markdown("#### 🚲 Fusions Vélotaf Détectées")
@@ -201,11 +201,10 @@ if commute_pairs or weight_info:
                     if st.button("⚡ Fusionner", key=f"auto_merge_{idx}", width="stretch"):
                         render_merge_pipeline_dialog(service, pair, f"💼 Vélotaf - {date_label}")
 
-    # Process Weight Training Shortcuts
     if weight_info:
         activity, new_name = weight_info
         with st.container(border=True):
-            st.markdown("#### 💪 Renommage Musculation")
+            st.markdown("#### 💪 Activité Musculation Détectée")
             col_info, col_btn = st.columns([3, 1], vertical_alignment="center")
 
             with col_info:
@@ -216,6 +215,18 @@ if commute_pairs or weight_info:
                     st.success("Activité mise à jour !")
                     st.cache_data.clear()
                     st.rerun()
+
+    if run_activities:
+        with st.container(border=True):
+            st.markdown("#### 🏃‍♂️ Activités Course Détectées")
+            for idx, act in enumerate(run_activities):
+                col_info, col_btn = st.columns([3, 1], vertical_alignment="center")
+
+                with col_info:
+                    st.markdown(f"**{act.name}**  \n`Distance : {act.distance_km} km`")
+                with col_btn:
+                    if st.button("📥 Télécharger GPX", key=f"run_download_{idx}", width="stretch"):
+                        render_merged_gpx_download_button([act], act.name, key=f"run_gpx_download_{idx}")
     st.write("")
 
 
