@@ -5,8 +5,8 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from utils.domain import StravaActivity, StravaActivityDisplay
-from utils.service import StravaService
+from strava_utils.domain import StravaActivity, StravaActivityDisplay
+from strava_utils.service import StravaService
 
 # Set modern, wide page layout
 st.set_page_config(page_title="Strava Activity Merger", page_icon="🏃‍♂️", layout="wide", initial_sidebar_state="collapsed")

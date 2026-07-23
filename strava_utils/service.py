@@ -3,8 +3,8 @@
 import time
 from typing import Any
 
-from utils.domain import StravaActivity
-from utils.strava_client import StravaAPIClient
+from strava_utils.domain import StravaActivity
+from strava_utils.strava_client import StravaAPIClient
 
 
 class StravaService:
