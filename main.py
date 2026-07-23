@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from utils.domain import StravaActivity
+from utils.domain import StravaActivity, StravaActivityDisplay
 from utils.service import StravaService
 
 # Set modern, wide page layout
@@ -202,31 +202,47 @@ if commute_pairs or weight_info or run_activities:
                         render_merge_pipeline_dialog(service, pair, f"💼 Vélotaf - {date_label}")
 
     if weight_info:
-        activity, new_name = weight_info
-        with st.container(border=True):
-            st.markdown("#### 💪 Activité Musculation Détectée")
-            col_info, col_btn = st.columns([3, 1], vertical_alignment="center")
+        for weight in weight_info:
+            activity, new_name = weight
+            with st.container(border=True):
+                st.markdown("#### 💪 Activités Musculation Détectées")
+                col_info, col_btn = st.columns([3, 1], vertical_alignment="center")
 
-            with col_info:
-                st.markdown(f"Activité générique détectée :  \n`Renommer vers : {new_name}`")
-            with col_btn:
-                if st.button("🏷️ Renommer", key="auto_rename", width="stretch"):
-                    service.rename_activity(activity.id, new_name)
-                    st.success("Activité mise à jour !")
-                    st.cache_data.clear()
-                    st.rerun()
+                with col_info:
+                    st.markdown(f"Activité générique détectée :  \n`Renommer vers : {new_name}`")
+                with col_btn:
+                    if st.button("🏷️ Renommer", key="auto_rename", width="stretch"):
+                        service.rename_activity(activity.id, new_name)
+                        st.success("Activité mise à jour avec succès ! 🎉")
+                        st.cache_data.clear()
+                        st.rerun()
 
     if run_activities:
         with st.container(border=True):
             st.markdown("#### 🏃‍♂️ Activités Course Détectées")
-            for idx, act in enumerate(run_activities):
+            for idx, (activity, suggested_name, suggested_desc) in enumerate(run_activities):
                 col_info, col_btn = st.columns([3, 1], vertical_alignment="center")
 
                 with col_info:
-                    st.markdown(f"**{act.name}**  \n`Distance : {act.distance_km} km`")
+                    st.markdown(f"**{activity.name}**  \n`Distance : {activity.distance_km} km` (le {activity.date})")
+                    user_name = st.text_input(
+                        "Nouveau nom de l'activité :",
+                        value=suggested_name,
+                        key=f"run_name_{activity.id}_{idx}",
+                    )
+                    user_desc = st.text_area(
+                        "Description de l'activité (météo incluse) :",
+                        value=suggested_desc,
+                        key=f"run_desc_{activity.id}_{idx}",
+                        height=100,
+                    )
                 with col_btn:
-                    if st.button("📥 Télécharger GPX", key=f"run_download_{idx}", width="stretch"):
-                        render_merged_gpx_download_button([act], act.name, key=f"run_gpx_download_{idx}")
+                    if st.button("🏷️ Renommer & Enregistrer", key=f"run_rename_btn_{activity.id}_{idx}", type="primary", width="stretch"):
+                        with st.spinner("Mise à jour sur Strava..."):
+                            service.rename_activity(activity.id, user_name, description=user_desc)
+                            st.success("Activité mise à jour avec succès ! 🎉")
+                            st.cache_data.clear()
+                            st.rerun()
     st.write("")
 
 
@@ -236,11 +252,7 @@ if commute_pairs or weight_info or run_activities:
 st.subheader("📋 Sélection Manuelle")
 
 # Build visual dataframe structure
-display_df = pd.DataFrame([a.model_dump() for a in activities]).drop(columns=["raw", "streams"])
-
-# Inject empty Selection column at the start if missing
-if "selection" not in display_df.columns:
-    display_df.insert(0, "selection", False)
+display_df = pd.DataFrame([StravaActivityDisplay.from_activity(a).model_dump() for a in activities])
 
 edited_df = st.data_editor(
     display_df,

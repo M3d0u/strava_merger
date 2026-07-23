@@ -68,10 +68,12 @@ class StravaAPIClient:
         """Create a direct link to delete an activity."""
         return f"https://www.strava.com/activities/{activity_id}"
 
-    def rename_activity(self, activity_id: int, new_name: str) -> Any:
+    def rename_activity(self, activity_id: int, new_name: str, description: str | None = None) -> Any:
         """Rename an activity."""
         headers = {"Authorization": f"Bearer {self.access_token}"}
-        data = {"name": new_name}
+        data: dict[str, Any] = {"name": new_name}
+        if description is not None:
+            data["description"] = description
         res = requests.put(f"https://www.strava.com/api/v3/activities/{activity_id}", headers=headers, data=data)
         return res.json() if res.status_code in [200, 201] else None
 
