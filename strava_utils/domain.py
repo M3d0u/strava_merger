@@ -381,7 +381,7 @@ class StravaActivity(BaseModel):
             its future name and meteo description.
         """
         runs = []
-        run_activities = [act for act in activities if act.activity_type == "Run" and "🏃‍♂️" not in act.name and "🏃" not in act.name]
+        run_activities = [act for act in activities if act.activity_type in ["Run", "Trail"] and "🏃‍♂️" not in act.name and "🏃" not in act.name]
         for run_act in run_activities:
             future_name = f"🏃‍♂️ {run_act.name}"
             weather_desc = StravaActivity._get_weather_description(run_act)
