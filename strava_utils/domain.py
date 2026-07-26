@@ -366,7 +366,7 @@ class StravaActivity(BaseModel):
                 temp, code = StravaActivity._fetch_weather_data(lat, lon, local_dt)
                 if temp is not None and code is not None:
                     emoji, desc = StravaActivity._get_weather_emoji_and_desc(code)
-                    return f"{emoji} Météo : {temp}°C, {desc}"
+                    return f"{emoji} {temp}°C, {desc}"
         return "Météo non disponible"
 
     @staticmethod
