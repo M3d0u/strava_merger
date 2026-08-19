@@ -370,26 +370,6 @@ class StravaActivity(BaseModel):
         return ""
 
     @staticmethod
-    def detect_Run(activities: list[StravaActivity]) -> list[tuple[StravaActivity, str, str]]:
-        """Detect running activities.
-
-        Args:
-            activities (list[StravaActivity]): List of StravaActivity instances.
-
-        Returns:
-            list[tuple[StravaActivity, str, str]]: Returns a list of tuples containing the running activity,
-            its future name and meteo description.
-        """
-        runs = []
-        run_activities = [act for act in activities if act.activity_type in ["Run", "Trail"] and "🏃‍♂️" not in act.name and "🏃" not in act.name]
-        for run_act in run_activities:
-            future_name = f"🏃‍♂️ {run_act.name}"
-            weather_desc = StravaActivity._get_weather_description(run_act)
-            runs.append((run_act, future_name, weather_desc))
-
-        return runs
-
-    @staticmethod
     def _get_activity_emoji(activity_type: str) -> str:
         """Map activity type to a default emoji.
 
@@ -425,6 +405,10 @@ class StravaActivity(BaseModel):
         suggestions: list[tuple[StravaActivity, str, str]] = []
 
         for act in activities:
+            # Skip weight training sessions (handled by detect_WeightTraining)
+            if act.activity_type == "WeightTraining":
+                continue
+
             # Check if name already starts with an emoji to prevent duplicate renaming suggestions
             first_char = act.name[0] if act.name else ""
             if ord(first_char) > 10000:
