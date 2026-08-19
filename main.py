@@ -61,7 +61,13 @@ if not check_password():
 # REUSABLE UI PIPELINE COMPONENT HELPERS
 # ==========================================
 def render_merged_gpx_download_button(activities_to_merge: list[StravaActivity], target_name: str, key: str | None = None) -> None:
-    """Render a download button for the compiled merged GPX file."""
+    """Render a download button for the compiled merged GPX file.
+
+    Args:
+        activities_to_merge (list[StravaActivity]): List of StravaActivity instances to merge.
+        target_name (str): Name for the merged activity.
+        key (str | None): Optional Streamlit key for the download button.
+    """
     try:
         merged_gpx = StravaActivity.merge_to_gpx(activities_to_merge)
         st.download_button(
@@ -77,7 +83,12 @@ def render_merged_gpx_download_button(activities_to_merge: list[StravaActivity],
 
 
 def render_success_view(dialog_success_key: str, activities_to_merge: list[StravaActivity], target_name: str) -> None:
-    """Render the success message and download button for the merged GPX."""
+    """Render the success message and download button for the merged GPX.
+
+    Args:
+        dialog_success_key (str): Key to track the success state in session.
+        activities_to_merge (list[StravaActivity]): List of StravaActivity instances that were merged.
+        target_name (str): Name for the merged activity."""
     st.success("Nouvelle activité consolidée créée avec succès ! 🎉")
     render_merged_gpx_download_button(activities_to_merge, target_name, key="success_upload_gpx_download")
 
@@ -88,7 +99,12 @@ def render_success_view(dialog_success_key: str, activities_to_merge: list[Strav
 
 
 def render_activities_actions(activities_to_merge: list[StravaActivity], service: StravaService) -> None:
-    """Render delete links and GPX download buttons for original activities."""
+    """Render delete links and GPX download buttons for original activities.
+
+    Args:
+        activities_to_merge (list[StravaActivity]): List of StravaActivity instances to render actions for.
+        service (StravaService): Instance of StravaService to generate delete URLs and handle GPX merging.
+    """
     for act in activities_to_merge:
         col_del, col_dl = st.columns([1, 1])
         with col_del:
@@ -113,7 +129,14 @@ def render_activities_actions(activities_to_merge: list[StravaActivity], service
 # ==========================================
 @st.dialog("🔄 Validation de la fusion", width="large")  # type: ignore[misc]
 def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: list[StravaActivity], target_name: str) -> None:
-    """Launch manual deletion prompts and handle final unified processing uploads."""
+    """
+    Launch manual deletion prompts and handle final unified processing uploads.
+
+    Args:
+        service (StravaService): Instance of StravaService to handle merging and uploading.
+        activities_to_merge (list[StravaActivity]): List of StravaActivity instances to merge.
+        target_name (str): Name for the merged activity.
+    """
     # Ensure a state variable to track the merge success of the current dialog session
     dialog_success_key = f"merge_success_{'-'.join(str(act.id) for act in activities_to_merge)}"
     if dialog_success_key not in st.session_state:
@@ -134,12 +157,12 @@ def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: li
         "les activités d'origine via les liens ci-dessous avant d'envoyer la nouvelle fusion."
     )
 
-    st.write("### 1. Sauvegarder et Supprimer les doublons d'origine")
+    st.write("### 1. Sauvegarder et/ou Supprimer les doublons d'origine")
     render_activities_actions(activities_to_merge, service)
 
     st.divider()
     st.write("### 2. Finaliser la synchronisation")
-    st.caption("Une fois les suppressions validées sur votre profil Strava, lancez la création :")
+    st.caption("Une fois les suppressions validées, lancez la création :")
 
     if st.button("🚀 Confirmer & lancer la fusion", type="primary", width="stretch"):
         with st.spinner("Génération du GPX et synchronisation..."):
@@ -179,13 +202,13 @@ if not activities:
 # Detect automated workflow opportunities
 commute_pairs = StravaActivity.detect_commutes(activities)
 weight_info = StravaActivity.detect_WeightTraining(activities)
-run_activities = StravaActivity.detect_Run(activities)
+general_activities = StravaActivity.detect_GeneralActivities(activities)
 
 
 # ==========================================
 # SECTION: SMART SUGGESTIONS
 # ==========================================
-if commute_pairs or weight_info or run_activities:
+if commute_pairs or weight_info or general_activities:
     st.subheader("💡 Actions Recommandées")
 
     if commute_pairs:
@@ -216,28 +239,27 @@ if commute_pairs or weight_info or run_activities:
                         st.success("Activité mise à jour avec succès ! 🎉")
                         st.cache_data.clear()
                         st.rerun()
-
-    if run_activities:
+    if general_activities:
         with st.container(border=True):
-            st.markdown("#### 🏃‍♂️ Activités Course Détectées")
-            for idx, (activity, suggested_name, suggested_desc) in enumerate(run_activities):
+            st.markdown("#### 🏷️ Renommer une Activité")
+            for idx, (activity, suggested_name, suggested_desc) in enumerate(general_activities):
                 col_info, col_btn = st.columns([3, 1], vertical_alignment="center")
 
                 with col_info:
-                    st.markdown(f"**{activity.name}**  \n`Distance : {activity.distance_km} km` (le {activity.date})")
+                    st.markdown(f"**{activity.name}** ({activity.activity_type}) — `{activity.distance_km} km` le {activity.date}")
                     user_name = st.text_input(
                         "Nouveau nom de l'activité :",
                         value=suggested_name,
-                        key=f"run_name_{activity.id}_{idx}",
+                        key=f"gen_name_{activity.id}_{idx}",
                     )
                     user_desc = st.text_area(
-                        "Description de l'activité (météo incluse) :",
+                        "Description (Météo Open-Meteo) :",
                         value=suggested_desc,
-                        key=f"run_desc_{activity.id}_{idx}",
-                        height=100,
+                        key=f"gen_desc_{activity.id}_{idx}",
+                        height=80,
                     )
                 with col_btn:
-                    if st.button("🏷️ Renommer & Enregistrer", key=f"run_rename_btn_{activity.id}_{idx}", type="primary", width="stretch"):
+                    if st.button("🏷️ Renommer & Enregistrer", key=f"gen_rename_btn_{activity.id}_{idx}", type="primary", width="stretch"):
                         with st.spinner("Mise à jour sur Strava..."):
                             service.rename_activity(activity.id, user_name, description=user_desc)
                             st.success("Activité mise à jour avec succès ! 🎉")

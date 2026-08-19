@@ -367,7 +367,7 @@ class StravaActivity(BaseModel):
                 if temp is not None and code is not None:
                     emoji, desc = StravaActivity._get_weather_emoji_and_desc(code)
                     return f"{emoji} {temp}°C, {desc}"
-        return "Météo non disponible"
+        return ""
 
     @staticmethod
     def detect_Run(activities: list[StravaActivity]) -> list[tuple[StravaActivity, str, str]]:
@@ -388,3 +388,52 @@ class StravaActivity(BaseModel):
             runs.append((run_act, future_name, weather_desc))
 
         return runs
+
+    @staticmethod
+    def _get_activity_emoji(activity_type: str) -> str:
+        """Map activity type to a default emoji.
+
+        Args:
+            activity_type (str): The type of the activity.
+
+        Returns:
+            str: The corresponding emoji for the activity type.
+        """
+        emoji_map = {
+            "Run": "🏃‍♂️",
+            "Ride": "🚴‍♂️",
+            "VirtualRide": "🚴‍♂️",
+            "EBikeRide": "🚴‍♂️",
+            "Walk": "🚶‍♂️",
+            "Hike": "🥾",
+            "Swim": "🏊‍♂️",
+            "AlpineSki": "⛷️",
+            "WeightTraining": "🏋️‍♀️",
+        }
+        return emoji_map.get(activity_type, "🏃‍♂️")
+
+    @classmethod
+    def detect_GeneralActivities(cls, activities: list[StravaActivity]) -> list[tuple[StravaActivity, str, str]]:
+        """Detect activities and build suggested names with activity emojis + weather descriptions.
+
+        Args:
+            activities (list[StravaActivity]): List of StravaActivity instances.
+
+        Returns:
+            list[tuple[StravaActivity, str, str]]: Tuples containing (activity, suggested_name, suggested_description)
+        """
+        suggestions: list[tuple[StravaActivity, str, str]] = []
+
+        for act in activities:
+            # Check if name already starts with an emoji to prevent duplicate renaming suggestions
+            first_char = act.name[0] if act.name else ""
+            if ord(first_char) > 10000:
+                continue
+
+            emoji = cls._get_activity_emoji(act.activity_type)
+            suggested_name = f"{emoji} {act.name}"
+            suggested_desc = cls._get_weather_description(act)
+
+            suggestions.append((act, suggested_name, suggested_desc))
+
+        return suggestions
