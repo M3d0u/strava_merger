@@ -53,11 +53,13 @@ class StravaAPIClient:
         )
         return res.json() if res.status_code == 200 else []
 
-    def upload_gpx(self, gpx_xml: str, name: str) -> dict[str, Any] | None:
+    def upload_gpx(self, gpx_xml: str, name: str, description: str | None = None) -> dict[str, Any] | None:
         """Upload GPX file to Strava"""
         headers = {"Authorization": f"Bearer {self.access_token}"}
         files = {"file": ("merged.gpx", gpx_xml, "application/gpx+xml")}
-        data = {"name": name, "data_type": "gpx"}
+        data: dict[str, Any] = {"name": name, "data_type": "gpx"}
+        if description is not None:
+            data["description"] = description
         res = requests.post("https://www.strava.com/api/v3/uploads", headers=headers, data=data, files=files)
         try:
             return cast(dict[str, Any], res.json())

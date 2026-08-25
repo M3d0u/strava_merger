@@ -127,11 +127,14 @@ class StravaService:
         except ValueError as e:
             return False, str(e)
 
+        # Generate weather description for each initial activity chronologically
+        description = StravaActivity.generate_merge_description(activities)
+
         max_upload_attempts = 3
         base_retry_delay = 5
 
         for attempt in range(max_upload_attempts):
-            upload_res = self.client.upload_gpx(gpx_xml, target_name)
+            upload_res = self.client.upload_gpx(gpx_xml, target_name, description=description)
 
             # Scenario A: Immediate failure on POST
             if not upload_res or "id" not in upload_res:

@@ -171,42 +171,41 @@ class StravaActivity(BaseModel):
 
     @staticmethod
     def detect_commutes(activities: list[StravaActivity]) -> list[list[StravaActivity]] | None:
-        """Detect morning and evening commute windows.
+        """Detect commute windows by grouping non-emoji ride activities by day.
 
         Args:
             activities (list[StravaActivity]): List of StravaActivity instances.
 
         Returns:
-            list[list[StravaActivity]] | None: Returns a list of pairs of StravaActivity
-            instances representing morning and evening commutes, or None if no pairs are found.
+            list[list[StravaActivity]] | None: Returns a list of StravaActivity
+            instances occurring on the same day, or None if no groups are found.
         """
-        by_date: dict[str, dict[str, StravaActivity | None]] = {}
-        m_start, m_end = dt_time(7, 50), dt_time(8, 50)
-        e_start, e_end = dt_time(17, 30), dt_time(19, 0)
+        by_date: dict[str, list[StravaActivity]] = {}
 
         for act in activities:
+            # Skip non-ride activities
             if act.activity_type != "Ride":
                 continue
 
+            # Skip activities starting with an emoji
+            first_char = act.name[0] if act.name else ""
+            if first_char and ord(first_char) > 10000:
+                continue
+
+            # Parse local date string
             local_date_str = str(act.raw.get("start_date_local", ""))
             local_dt = datetime.fromisoformat(local_date_str.replace("Z", ""))
             date_str = local_dt.date().isoformat()
-            act_time = local_dt.time()
 
             if date_str not in by_date:
-                by_date[date_str] = {"morning": None, "evening": None}
+                by_date[date_str] = []
 
-            if m_start <= act_time <= m_end:
-                by_date[date_str]["morning"] = act
-            elif e_start <= act_time <= e_end:
-                by_date[date_str]["evening"] = act
+            by_date[date_str].append(act)
 
-        pairs: list[list[StravaActivity]] = []
-        for pair in by_date.values():
-            if pair["morning"] and pair["evening"]:
-                pairs.append([pair["morning"], pair["evening"]])
+        # Filter for dates with at least 2 rides
+        daily_groups = [acts for acts in by_date.values() if len(acts) >= 2]
 
-        return pairs if pairs else None
+        return daily_groups if daily_groups else None
 
     @staticmethod
     def detect_WeightTraining(activities: list[StravaActivity]) -> list[tuple[StravaActivity, str]]:
@@ -421,3 +420,25 @@ class StravaActivity(BaseModel):
             suggestions.append((act, suggested_name, suggested_desc))
 
         return suggestions
+
+    @classmethod
+    def generate_merge_description(cls, activities: list[StravaActivity]) -> str | None:
+        """Generate a unified weather description for a list of activities.
+
+        Args:
+            activities (list[StravaActivity]): List of StravaActivity instances.
+
+        Returns:
+            str | None: Returns a string representing the weather description, or None.
+        """
+        sorted_acts = sorted(activities, key=lambda x: str(x.raw.get("start_date", "")))
+        meteo_lines = []
+        for act in sorted_acts:
+            weather = cls._get_weather_description(act)
+            if weather:
+                local_dt = cls._get_activity_local_datetime(act)
+                time_str = local_dt.strftime("%H:%M") if local_dt else ""
+                prefix = f"Départ {time_str}" if time_str else act.name
+                meteo_lines.append(f"{prefix} : {weather}")
+
+        return "\n".join(meteo_lines) if meteo_lines else None
