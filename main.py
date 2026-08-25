@@ -213,17 +213,24 @@ if commute_pairs or weight_info or general_activities:
 
     if commute_pairs:
         with st.container(border=True):
-            st.markdown("#### 🚲 Fusions Vélotaf Détectées")
-            for idx, pair in enumerate(commute_pairs):
-                date_label = datetime.fromisoformat(str(pair[0].raw.get("start_date_local"))).strftime("%d/%m/%Y")
+            st.markdown("#### 🚲 Fusions vélo Détectées")
+            for idx, group in enumerate(commute_pairs):
+                date_label = datetime.fromisoformat(str(group[0].raw.get("start_date_local"))).strftime("%d/%m/%Y")
+
+                # Format distances for all activities in the group (e.g. "12.5 km + 3.2 km + 11.0 km")
+                distances_str = " + ".join(f"{act.distance_km} km" for act in group)
+                total_distance = sum(act.distance_km for act in group)
+
                 col_info, col_btn = st.columns([3, 1], vertical_alignment="center")
 
                 with col_info:
-                    st.markdown(f"**Trajet du {date_label}**  \n`Aller/Retour : {pair[0].distance_km} km + {pair[1].distance_km} km`")
+                    st.markdown(
+                        f"**Trajets du {date_label}** ({len(group)} trajets - total : {total_distance:.1f} km)  \n"
+                        f"`Détail : {distances_str}`"
+                    )
                 with col_btn:
                     if st.button("⚡ Fusionner", key=f"auto_merge_{idx}", width="stretch"):
-                        render_merge_pipeline_dialog(service, pair, f"💼 Vélotaf - {date_label}")
-
+                        render_merge_pipeline_dialog(service, group, f"💼 Vélotaf - {date_label}")
     if weight_info:
         for weight in weight_info:
             activity, new_name = weight
@@ -248,12 +255,12 @@ if commute_pairs or weight_info or general_activities:
                 with col_info:
                     st.markdown(f"**{activity.name}** ({activity.activity_type}) — `{activity.distance_km} km` le {activity.date}")
                     user_name = st.text_input(
-                        "Nouveau nom de l'activité :",
+                        "Nom de l'activité :",
                         value=suggested_name,
                         key=f"gen_name_{activity.id}_{idx}",
                     )
                     user_desc = st.text_area(
-                        "Description (Météo Open-Meteo) :",
+                        "Description :",
                         value=suggested_desc,
                         key=f"gen_desc_{activity.id}_{idx}",
                         height=80,
