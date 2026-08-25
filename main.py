@@ -225,8 +225,7 @@ if commute_pairs or weight_info or general_activities:
 
                 with col_info:
                     st.markdown(
-                        f"**Trajets du {date_label}** ({len(group)} trajets - total : {total_distance:.1f} km)  \n"
-                        f"`Détail : {distances_str}`"
+                        f"**Trajets du {date_label}** ({len(group)} trajets - total : {total_distance:.1f} km)  \n" f"`Détail : {distances_str}`"
                     )
                 with col_btn:
                     if st.button("⚡ Fusionner", key=f"auto_merge_{idx}", width="stretch"):
