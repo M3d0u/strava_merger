@@ -182,8 +182,8 @@ class StravaActivity(BaseModel):
         by_date: dict[str, list[StravaActivity]] = {}
 
         for act in activities:
-            # Skip non-ride activities
-            if act.activity_type != "Ride":
+            # Skip non-ride activities (allow Ride and EBikeRide)
+            if act.activity_type not in ("Ride", "EBikeRide"):
                 continue
 
             # Skip activities starting with an emoji
@@ -402,9 +402,13 @@ class StravaActivity(BaseModel):
         """
         suggestions: list[tuple[StravaActivity, str, str]] = []
 
+        # Find any activities detected as commutes to exclude them (hierarchical logic)
+        commute_groups = cls.detect_commutes(activities) or []
+        commute_ids = {act.id for group in commute_groups for act in group}
+
         for act in activities:
-            # Skip weight training sessions (handled by detect_WeightTraining)
-            if act.activity_type == "WeightTraining":
+            # Skip already handle activites
+            if act.activity_type == "WeightTraining" or act.id in commute_ids:
                 continue
 
             # Check if name already starts with an emoji to prevent duplicate renaming suggestions
