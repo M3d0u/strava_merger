@@ -3,6 +3,19 @@
 import time
 from typing import Any
 
+from strava_utils.constants import (
+    STRAVA_FIELD_ACTIVITY_ID,
+    STRAVA_FIELD_BIKES,
+    STRAVA_FIELD_CODE,
+    STRAVA_FIELD_DISTANCE,
+    STRAVA_FIELD_ERROR,
+    STRAVA_FIELD_ERRORS,
+    STRAVA_FIELD_FIELD,
+    STRAVA_FIELD_ID,
+    STRAVA_FIELD_MESSAGE,
+    STRAVA_FIELD_RESOURCE,
+    STRAVA_FIELD_SHOES,
+)
 from strava_utils.domain import StravaActivity
 from strava_utils.strava_client import StravaAPIClient
 
@@ -24,6 +37,26 @@ class StravaService:
         if not raw_data:
             return []
         return [StravaActivity.from_api(a) for a in raw_data]
+
+    def get_athlete_gear(self) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Fetch active bikes and shoes with their distances.
+
+        Returns:
+            tuple[list[dict[str, Any]], list[dict[str, Any]]]: Lists of bikes and shoes with formatted distance_km.
+        """
+        athlete_data = self.client.fetch_athlete()
+        if not athlete_data:
+            return [], []
+
+        bikes = athlete_data.get(STRAVA_FIELD_BIKES, [])
+        shoes = athlete_data.get(STRAVA_FIELD_SHOES, [])
+
+        for bike in bikes:
+            bike["distance_km"] = round(bike.get(STRAVA_FIELD_DISTANCE, 0) / 1000, 1)
+        for shoe in shoes:
+            shoe["distance_km"] = round(shoe.get(STRAVA_FIELD_DISTANCE, 0) / 1000, 1)
+
+        return bikes, shoes
 
     def get_delete_url(self, activity: StravaActivity) -> str:
         """Get the direct link to delete an activity on Strava.
@@ -58,18 +91,18 @@ class StravaService:
         if not response_dict:
             return "Aucune réponse de l'API Strava."
 
-        if "error" in response_dict and response_dict["error"]:
-            return str(response_dict["error"])
+        if STRAVA_FIELD_ERROR in response_dict and response_dict[STRAVA_FIELD_ERROR]:
+            return str(response_dict[STRAVA_FIELD_ERROR])
 
-        message = str(response_dict.get("message", "Erreur inconnue"))
-        errors = response_dict.get("errors")
+        message = str(response_dict.get(STRAVA_FIELD_MESSAGE, "Erreur inconnue"))
+        errors = response_dict.get(STRAVA_FIELD_ERRORS)
         if errors and isinstance(errors, list):
             err_details = []
             for err in errors:
                 if isinstance(err, dict):
-                    field = err.get("field", "")
-                    code = err.get("code", "")
-                    resource = err.get("resource", "")
+                    field = err.get(STRAVA_FIELD_FIELD, "")
+                    code = err.get(STRAVA_FIELD_CODE, "")
+                    resource = err.get(STRAVA_FIELD_RESOURCE, "")
                     err_details.append(f"{resource} {field}: {code}")
                 else:
                     err_details.append(str(err))
@@ -96,12 +129,12 @@ class StravaService:
             if not status:
                 continue
 
-            if status.get("error"):
-                error_msg = str(status.get("error"))
+            if status.get(STRAVA_FIELD_ERROR):
+                error_msg = str(status.get(STRAVA_FIELD_ERROR))
                 is_duplicate = "duplicate of" in error_msg.lower()
                 return False, f"Erreur de traitement Strava : {error_msg}", is_duplicate
 
-            activity_id = status.get("activity_id")
+            activity_id = status.get(STRAVA_FIELD_ACTIVITY_ID)
             if activity_id:
                 self.client.mute_activity(activity_id)
                 return True, None, False
@@ -137,7 +170,7 @@ class StravaService:
             upload_res = self.client.upload_gpx(gpx_xml, target_name, description=description)
 
             # Scenario A: Immediate failure on POST
-            if not upload_res or "id" not in upload_res:
+            if not upload_res or STRAVA_FIELD_ID not in upload_res:
                 error_msg = self._format_error(upload_res)
                 if "duplicate of" in error_msg.lower() and attempt < max_upload_attempts - 1:
                     time.sleep(base_retry_delay)
@@ -145,7 +178,7 @@ class StravaService:
                 return False, f"La requête d'envoi a été rejetée par Strava : {error_msg}"
 
             # Scenario B: Async polling via helper
-            success, error_msg, is_duplicate = self._poll_upload_status(upload_res["id"])
+            success, error_msg, is_duplicate = self._poll_upload_status(upload_res[STRAVA_FIELD_ID])
 
             if success:
                 return True, None

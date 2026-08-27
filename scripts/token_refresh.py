@@ -2,11 +2,12 @@
 
 import requests
 
-"https://www.strava.com/oauth/authorize?client_id=CLIENT_ID&redirect_uri=http://localhost&response_type=code&approval_prompt=force&scope=activity:read_all,activity:write"
+"https://www.strava.com/oauth/authorize?client_id=128261&redirect_uri=http://localhost&response_type=code&approval_prompt=force&scope=activity:read_all,activity:write,profile:read_all"
 # Paste your details here
-CLIENT_ID = ""
-CLIENT_SECRET = ""
-CODE = ""
+
+CLIENT_ID = "128261"
+CLIENT_SECRET = "256fb9b98d5202d60f59ebbdcd2bbfb621d07e55"
+CODE = "f7ee8073dd49fede732e5e4e630dfec62bc01cc5"
 
 res = requests.post(
     "https://www.strava.com/oauth/token",

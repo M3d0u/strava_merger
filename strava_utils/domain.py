@@ -11,6 +11,22 @@ import gpxpy.gpx
 import requests
 from pydantic import BaseModel, Field
 
+from strava_utils.constants import (
+    STRAVA_FIELD_DATA,
+    STRAVA_FIELD_DISTANCE,
+    STRAVA_FIELD_ID,
+    STRAVA_FIELD_MOVING_TIME,
+    STRAVA_FIELD_NAME,
+    STRAVA_FIELD_START_DATE,
+    STRAVA_FIELD_START_DATE_LOCAL,
+    STRAVA_FIELD_START_LATLNG,
+    STRAVA_FIELD_TYPE,
+    STRAVA_STREAM_ALTITUDE,
+    STRAVA_STREAM_HEARTRATE,
+    STRAVA_STREAM_LATLNG,
+    STRAVA_STREAM_TIME,
+)
+
 
 class StravaActivityDisplay(BaseModel):
     selection: bool = False
@@ -55,18 +71,18 @@ class StravaActivity(BaseModel):
         Returns:
             StravaActivity: An instance of the StravaActivity class initialized with the validated and transformed data.
         """
-        distance_meters = float(payload.get("distance", 0.0))
-        moving_seconds = int(payload.get("moving_time", 0))
+        distance_meters = float(payload.get(STRAVA_FIELD_DISTANCE, 0.0))
+        moving_seconds = int(payload.get(STRAVA_FIELD_MOVING_TIME, 0))
 
-        parsed_date = datetime.fromisoformat(payload["start_date"].replace("Z", "+00:00"))
+        parsed_date = datetime.fromisoformat(payload[STRAVA_FIELD_START_DATE].replace("Z", "+00:00"))
         date_str = parsed_date.strftime("%Y-%m-%d %H:%M")
         duration_str = str(timedelta(seconds=moving_seconds))
 
         return cls(
-            id=int(payload["id"]),
+            id=int(payload[STRAVA_FIELD_ID]),
             date=date_str,
-            name=str(payload["name"]),
-            activity_type=str(payload["type"]),
+            name=str(payload[STRAVA_FIELD_NAME]),
+            activity_type=str(payload[STRAVA_FIELD_TYPE]),
             distance_km=round(distance_meters / 1000, 2),
             duration=duration_str,
             raw=payload,
@@ -84,16 +100,16 @@ class StravaActivity(BaseModel):
         if not streams:
             return {}
         if isinstance(streams, dict):
-            if "type" in streams and "data" in streams:
-                type_val = streams.get("type")
+            if STRAVA_FIELD_TYPE in streams and STRAVA_FIELD_DATA in streams:
+                type_val = streams.get(STRAVA_FIELD_TYPE)
                 if isinstance(type_val, str):
                     return {type_val: streams}
             return streams
         if isinstance(streams, list):
             normalized = {}
             for stream in streams:
-                if isinstance(stream, dict) and "type" in stream:
-                    type_val = stream.get("type")
+                if isinstance(stream, dict) and STRAVA_FIELD_TYPE in stream:
+                    type_val = stream.get(STRAVA_FIELD_TYPE)
                     if isinstance(type_val, str):
                         normalized[type_val] = stream
             return normalized
@@ -117,22 +133,22 @@ class StravaActivity(BaseModel):
         gpx_track = gpxpy.gpx.GPXTrack()
         gpx.tracks.append(gpx_track)
 
-        sorted_acts = sorted(activities, key=lambda x: str(x.raw.get("start_date", "")))
+        sorted_acts = sorted(activities, key=lambda x: str(x.raw.get(STRAVA_FIELD_START_DATE, "")))
 
         for act in sorted_acts:
             streams_dict = StravaActivity._normalize_streams(act.streams)
 
-            if "latlng" not in streams_dict or "time" not in streams_dict:
+            if STRAVA_STREAM_LATLNG not in streams_dict or STRAVA_STREAM_TIME not in streams_dict:
                 raise ValueError(
                     f"L'activité '{act.name}' ne contient pas de données de tracé ou de temps (flux de données incomplets). "
                     "Impossible de procéder à la fusion."
                 )
 
-            start_dt = datetime.fromisoformat(str(act.raw.get("start_date", "")).replace("Z", "+00:00"))
-            latlng: list[list[float]] = streams_dict["latlng"]["data"]
-            time_offsets: list[int] = streams_dict["time"]["data"]
-            altitudes: list[float | None] = streams_dict.get("altitude", {}).get("data", [None] * len(latlng))
-            hr: list[int | None] = streams_dict.get("heartrate", {}).get("data", [None] * len(latlng))
+            start_dt = datetime.fromisoformat(str(act.raw.get(STRAVA_FIELD_START_DATE, "")).replace("Z", "+00:00"))
+            latlng: list[list[float]] = streams_dict[STRAVA_STREAM_LATLNG][STRAVA_FIELD_DATA]
+            time_offsets: list[int] = streams_dict[STRAVA_STREAM_TIME][STRAVA_FIELD_DATA]
+            altitudes: list[float | None] = streams_dict.get(STRAVA_STREAM_ALTITUDE, {}).get(STRAVA_FIELD_DATA, [None] * len(latlng))
+            hr: list[int | None] = streams_dict.get(STRAVA_STREAM_HEARTRATE, {}).get(STRAVA_FIELD_DATA, [None] * len(latlng))
 
             # Defensive check to avoid index mismatch errors
             num_points = min(len(latlng), len(time_offsets))
@@ -192,7 +208,7 @@ class StravaActivity(BaseModel):
                 continue
 
             # Parse local date string
-            local_date_str = str(act.raw.get("start_date_local", ""))
+            local_date_str = str(act.raw.get(STRAVA_FIELD_START_DATE_LOCAL, ""))
             local_dt = datetime.fromisoformat(local_date_str.replace("Z", ""))
             date_str = local_dt.date().isoformat()
 
@@ -221,7 +237,7 @@ class StravaActivity(BaseModel):
         if not weight_activities:
             return []
 
-        sorted_activities = sorted(weight_activities, key=lambda x: str(x.raw.get("start_date", "")))
+        sorted_activities = sorted(weight_activities, key=lambda x: str(x.raw.get(STRAVA_FIELD_START_DATE, "")))
         most_recent_activity = sorted_activities[-1]
 
         if "Push" not in most_recent_activity.name and "Pull" not in most_recent_activity.name:
@@ -330,14 +346,14 @@ class StravaActivity(BaseModel):
         Returns:
             datetime | None: Returns a datetime object representing the local datetime
         """
-        start_date_local = run_act.raw.get("start_date_local")
+        start_date_local = run_act.raw.get(STRAVA_FIELD_START_DATE_LOCAL)
         if start_date_local:
             try:
                 return datetime.fromisoformat(str(start_date_local).replace("Z", ""))
             except Exception:
                 pass
 
-        start_date_utc = run_act.raw.get("start_date")
+        start_date_utc = run_act.raw.get(STRAVA_FIELD_START_DATE)
         if start_date_utc:
             try:
                 return datetime.fromisoformat(str(start_date_utc).replace("Z", "+00:00"))
@@ -356,7 +372,7 @@ class StravaActivity(BaseModel):
         Returns:
             str: Returns a string representing the weather description.
         """
-        latlng = run_act.raw.get("start_latlng")
+        latlng = run_act.raw.get(STRAVA_FIELD_START_LATLNG)
         if latlng and isinstance(latlng, (list, tuple)) and len(latlng) == 2:
             lat, lon = float(latlng[0]), float(latlng[1])
             local_dt = StravaActivity._get_activity_local_datetime(run_act)
@@ -434,7 +450,7 @@ class StravaActivity(BaseModel):
         Returns:
             str | None: Returns a string representing the weather description, or None.
         """
-        sorted_acts = sorted(activities, key=lambda x: str(x.raw.get("start_date", "")))
+        sorted_acts = sorted(activities, key=lambda x: str(x.raw.get(STRAVA_FIELD_START_DATE, "")))
         meteo_lines = []
         for act in sorted_acts:
             weather = cls._get_weather_description(act)

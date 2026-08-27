@@ -5,6 +5,11 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
+from strava_utils.constants import (
+    STRAVA_FIELD_NAME,
+    STRAVA_FIELD_PRIMARY,
+    STRAVA_FIELD_START_DATE_LOCAL,
+)
 from strava_utils.domain import StravaActivity, StravaActivityDisplay
 from strava_utils.service import StravaService
 
@@ -215,7 +220,7 @@ if commute_pairs or weight_info or general_activities:
         with st.container(border=True):
             st.markdown("#### 🚲 Fusions vélo Détectées")
             for idx, group in enumerate(commute_pairs):
-                date_label = datetime.fromisoformat(str(group[0].raw.get("start_date_local"))).strftime("%d/%m/%Y")
+                date_label = datetime.fromisoformat(str(group[0].raw.get(STRAVA_FIELD_START_DATE_LOCAL))).strftime("%d/%m/%Y")
 
                 # Format distances for all activities in the group (e.g. "12.5 km + 3.2 km + 11.0 km")
                 distances_str = " + ".join(f"{act.distance_km} km" for act in group)
@@ -277,7 +282,7 @@ if commute_pairs or weight_info or general_activities:
 # ==========================================
 # SECTION: WORKSPACE / MANUAL SELECTION
 # ==========================================
-st.subheader("📋 Sélection Manuelle")
+st.subheader("📋 Fusion Manuelle")
 
 # Build visual dataframe structure
 display_df = pd.DataFrame([StravaActivityDisplay.from_activity(a).model_dump() for a in activities])
@@ -314,3 +319,60 @@ if len(selected_activities) >= 2:
         with col_action:
             if st.button("🚀 Lancer la fusion", type="primary", width="stretch"):
                 render_merge_pipeline_dialog(service, selected_activities, new_name)
+
+
+# ==========================================
+# SECTION: EQUIPMENT WEAR TRACKER
+# ==========================================
+st.write("")
+st.divider()
+
+st.markdown("### 📊 État des Équipements")
+st.write("")
+
+shoe_threshold = 1000
+
+st.write("")
+col_shoes_view, col_bikes_view = st.columns([1, 1])
+
+try:
+    bikes, shoes = service.get_athlete_gear()
+except Exception as e:
+    st.error(f"Impossible de récupérer vos équipements depuis l'API Strava : {e}")
+    bikes, shoes = [], []
+
+with col_shoes_view:
+    st.markdown("#### 👟 Vos Chaussures")
+    if shoes:
+        for shoe in shoes:
+            name = shoe.get(STRAVA_FIELD_NAME, "Chaussure")
+            dist = shoe.get("distance_km", 0.0)
+            is_primary = shoe.get(STRAVA_FIELD_PRIMARY, False)
+            formatted_dist = f"{dist:,.1f}".replace(",", " ")
+            badge = " ⭐ (Par défaut)" if is_primary else ""
+
+            with st.container(border=True):
+                st.markdown(f"**{name}**{badge}")
+                if dist >= shoe_threshold:
+                    st.markdown(f"🔴 **{formatted_dist} km** / {shoe_threshold} km")
+                elif dist >= shoe_threshold * 0.75:
+                    st.markdown(f"🟡 **{formatted_dist} km** / {shoe_threshold} km")
+                else:
+                    st.markdown(f"🟢 **{formatted_dist} km** / {shoe_threshold} km")
+    else:
+        st.info("Aucune chaussure active trouvée sur votre profil Strava.")
+
+with col_bikes_view:
+    st.markdown("#### 🚲 Vos Vélos")
+    if bikes:
+        for bike in bikes:
+            name = bike.get(STRAVA_FIELD_NAME, "Vélo")
+            dist = bike.get("distance_km", 0.0)
+            formatted_dist = f"{dist:,.1f}".replace(",", " ")
+            is_primary = bike.get(STRAVA_FIELD_PRIMARY, False)
+            badge = " ⭐ (Par défaut)" if is_primary else ""
+
+            with st.container(border=True):
+                st.markdown(f"**{name}**{badge} - {formatted_dist} km")
+    else:
+        st.info("Aucun vélo actif trouvé sur votre profil Strava.")
