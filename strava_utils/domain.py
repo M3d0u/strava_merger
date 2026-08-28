@@ -452,12 +452,12 @@ class StravaActivity(BaseModel):
         """
         sorted_acts = sorted(activities, key=lambda x: str(x.raw.get(STRAVA_FIELD_START_DATE, "")))
         meteo_lines = []
+        act_nbr = 1
         for act in sorted_acts:
             weather = cls._get_weather_description(act)
             if weather:
-                local_dt = cls._get_activity_local_datetime(act)
-                time_str = local_dt.strftime("%H:%M") if local_dt else ""
-                prefix = f"Départ {time_str}" if time_str else act.name
+                prefix = f"Départ {act_nbr}"
+                act_nbr += 1
                 meteo_lines.append(f"{prefix} : {weather}")
 
         return "\n".join(meteo_lines) if meteo_lines else None
