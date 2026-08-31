@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
+from heapq import nlargest
 from typing import Any
 
 import gpxpy
@@ -233,19 +234,23 @@ class StravaActivity(BaseModel):
             list[tuple[StravaActivity, str]]: Returns a list of tuples containing the
             weight training activities and the new names to assign.
         """
-        weight_activities = [act for act in activities if act.activity_type == "WeightTraining"]
-        if not weight_activities:
+        recent_weight_acts = nlargest(
+            2, (act for act in activities if act.activity_type == "WeightTraining"), key=lambda act: act.raw.get(STRAVA_FIELD_START_DATE, "")
+        )
+
+        if not recent_weight_acts or len(recent_weight_acts) < 2:
             return []
 
-        sorted_activities = sorted(weight_activities, key=lambda x: str(x.raw.get(STRAVA_FIELD_START_DATE, "")))
-        most_recent_activity = sorted_activities[-1]
+        most_recent = recent_weight_acts[0]
+        name = most_recent.name
 
-        if "Push" not in most_recent_activity.name and "Pull" not in most_recent_activity.name:
-            has_prev_pull = len(sorted_activities) > 1 and "Pull" in sorted_activities[-2].name
-            new_name = "🏋️‍♀️ Push" if has_prev_pull else "🏋️‍♀️ Pull"
-            return [(most_recent_activity, new_name)]
+        if "🏋️‍♀️" in name or "Push" in name or "Pull" in name:
+            return []
 
-        return []
+        has_prev_pull = len(recent_weight_acts) > 1 and "Pull" in recent_weight_acts[1].name
+        new_name = "🏋️‍♀️ Push" if has_prev_pull else "🏋️‍♀️ Pull"
+
+        return [(most_recent, new_name)]
 
     @staticmethod
     def _fetch_weather_data(lat: float, lon: float, local_dt: datetime) -> tuple[float | None, int | None]:
