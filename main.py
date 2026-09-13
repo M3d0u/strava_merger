@@ -65,7 +65,6 @@ if not check_password():
 
 def render_marathon_plan() -> None:
     """Render the self-contained interactive marathon planner."""
-    """Render the marathon planning section with an embedded HTML iframe."""
     st.caption("Du 14 Septembre 2026 au 17 Janvier 2027 - 18 Semaines d'entraînement.")
     st.iframe(src=Path(__file__).with_name("plan_marathon.html"), height=1_250)
 
