@@ -197,8 +197,8 @@ def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: li
 # ==========================================
 
 # Simple title layout
-st.title("🏃‍♂️ Strava Activity Merger")
-st.caption("Fusion de trajets et renommages d'entraînements.")
+st.title("🏃‍♂️ Strava Helper")
+st.caption("Fusion de trajets, renommages d'entraînements et planification.")
 
 with st.expander("🏃 Plan Marathon Sub-3h", expanded=False):
     render_marathon_plan()
