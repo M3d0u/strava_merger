@@ -1878,11 +1878,11 @@
     function renderDayCard(day, index, weekNum) {
         const typeClass = getTypeClass(day.title);
         return `
-            <div class="day-card" 
-                 draggable="true" 
-                 id="${day.id}" 
+            <div class="day-card"
+                 draggable="true"
+                 id="${day.id}"
                  data-id="${day.id}"
-                 data-week="${weekNum}" 
+                 data-week="${weekNum}"
                  data-index="${index}">
                 <div class="day-header">
                     <span class="day-name">${day.day_name}</span>
@@ -1954,7 +1954,7 @@
 
                         // Swap workouts between days (keep original day_name and date)
                         const weekObj = weeksData.find(w => w.num === fromWeek);
-                        
+
                         const tempTitle = weekObj.days[fromIdx].title;
                         const tempDetail = weekObj.days[fromIdx].detail;
                         const tempDuration = weekObj.days[fromIdx].duration;
