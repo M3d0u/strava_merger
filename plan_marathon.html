@@ -1986,28 +1986,100 @@
     }
 
     // ICS GENERATION & EXPORT
+    // All events are written in the Europe/Paris timezone so Google Calendar
+    // keeps the intended training slot through daylight-saving changes.
+    const trainingStartTimes = {
+        'Lundi': '18:15',
+        'Mardi': '12:15',
+        'Mercredi': '12:15',
+        'Jeudi': '18:15',
+        'Vendredi': '12:15',
+        'Samedi': '09:30',
+        'Dimanche': '09:30',
+    };
+
+    function estimateDurationMinutes(duration) {
+        if (!duration) return 0;
+
+        const normalized = duration.replace('~', '').trim();
+        const hourMatches = [...normalized.matchAll(/(\d+)h(?:(\d+))?/g)];
+        if (hourMatches.length) {
+            const durations = hourMatches.map(match => Number(match[1]) * 60 + Number(match[2] || 0));
+            return Math.round(durations.reduce((sum, value) => sum + value, 0) / durations.length);
+        }
+
+        const minuteMatches = [...normalized.matchAll(/(\d+)(?:\s*-\s*(\d+))?\s*min/g)]
+            .map(match => match[2] ? (Number(match[1]) + Number(match[2])) / 2 : Number(match[1]));
+        if (minuteMatches.length) {
+            return Math.round(minuteMatches.reduce((sum, value) => sum + value, 0) / minuteMatches.length);
+        }
+        return 0;
+    }
+
+    function formatLocalDateTime(isoDate, time, minutesToAdd = 0) {
+        const localDate = new Date(`${isoDate}T${time}:00Z`);
+        localDate.setUTCMinutes(localDate.getUTCMinutes() + minutesToAdd);
+        const pad = value => String(value).padStart(2, '0');
+        return `${localDate.getUTCFullYear()}${pad(localDate.getUTCMonth() + 1)}${pad(localDate.getUTCDate())}`
+            + `T${pad(localDate.getUTCHours())}${pad(localDate.getUTCMinutes())}00`;
+    }
+
+    function escapeICSValue(value) {
+        return String(value)
+            .replace(/\\/g, '\\\\')
+            .replace(/;/g, '\\;')
+            .replace(/,/g, '\\,')
+            .replace(/\r?\n/g, '\\n');
+    }
+
     function generateICSContent(events) {
         let ics = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
             'PRODID:-//Plan Marathon Sub-3h//FR',
             'CALSCALE:GREGORIAN',
-            'METHOD:PUBLISH'
+            'METHOD:PUBLISH',
+            'X-WR-CALNAME:🏋️‍♀️ Sport',
+            'X-WR-TIMEZONE:Europe/Paris',
+            'BEGIN:VTIMEZONE',
+            'TZID:Europe/Paris',
+            'X-LIC-LOCATION:Europe/Paris',
+            'BEGIN:DAYLIGHT',
+            'TZOFFSETFROM:+0100',
+            'TZOFFSETTO:+0200',
+            'TZNAME:CEST',
+            'DTSTART:19700329T020000',
+            'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
+            'END:DAYLIGHT',
+            'BEGIN:STANDARD',
+            'TZOFFSETFROM:+0200',
+            'TZOFFSETTO:+0100',
+            'TZNAME:CET',
+            'DTSTART:19701025T030000',
+            'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
+            'END:STANDARD',
+            'END:VTIMEZONE'
         ];
 
         events.forEach(evt => {
             if (!evt.title || evt.title === 'Repos' || evt.title === 'Repos complet') return;
 
-            // Format YYYYMMDD
-            const iso = evt.iso_date.replace(/-/g, '');
-            const uid = `marathon-sub3h-${evt.id}-${iso}@plan.com`;
+            const startTime = trainingStartTimes[evt.day_name];
+            const durationMinutes = estimateDurationMinutes(evt.duration);
+            if (!startTime || !durationMinutes) return;
+
+            const startDateTime = formatLocalDateTime(evt.iso_date, startTime);
+            const endDateTime = formatLocalDateTime(evt.iso_date, startTime, durationMinutes);
+            const uid = `marathon-sub3h-${evt.id}-${startDateTime}@plan.com`;
+            const description = `${evt.detail || ''}${evt.duration ? ` (${evt.duration})` : ''}`.trim();
 
             ics.push('BEGIN:VEVENT');
             ics.push(`UID:${uid}`);
-            ics.push(`DTSTAMP:${iso}T060000Z`);
-            ics.push(`DTSTART;VALUE=DATE:${iso}`);
-            ics.push(`SUMMARY:${evt.title} - Marathon Sub-3h`);
-            ics.push(`DESCRIPTION:${(evt.detail + ' ' + (evt.duration ? '(' + evt.duration + ')' : '')).replace(/\n/g, ' ')}`);
+            ics.push(`DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}`);
+            ics.push(`DTSTART;TZID=Europe/Paris:${startDateTime}`);
+            ics.push(`DTEND;TZID=Europe/Paris:${endDateTime}`);
+            ics.push(`SUMMARY:${escapeICSValue(`${evt.title} - Marathon Sub-3h`)}`);
+            ics.push(`DESCRIPTION:${escapeICSValue(description)}`);
             ics.push('STATUS:CONFIRMED');
             ics.push('END:VEVENT');
         });

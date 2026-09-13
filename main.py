@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 from strava_utils.constants import (
     STRAVA_FIELD_NAME,
@@ -63,27 +64,11 @@ if not check_password():
     st.stop()
 
 
-# ==========================================
-# APP NAVIGATION
-# ==========================================
-app_section = st.radio(
-    "Navigation",
-    ("Activités Strava", "Plan Marathon"),
-    horizontal=True,
-    label_visibility="collapsed",
-)
-
-
 def render_marathon_plan() -> None:
+    """Render the self-contained interactive marathon planner."""
     """Render the marathon planning section with an embedded HTML iframe."""
-    st.title("🏃 Plan Marathon Sub-3h")
     st.caption("Du 14 Septembre 2026 au 17 Janvier 2027 - 18 Semaines d'entraînement.")
     st.iframe(src=Path(__file__).with_name("plan_marathon.html"), height=1_250)
-
-
-if app_section == "Plan Marathon":
-    render_marathon_plan()
-    st.stop()
 
 
 # ==========================================
@@ -216,7 +201,9 @@ def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: li
 # Simple title layout
 st.title("🏃‍♂️ Strava Activity Merger")
 st.caption("Fusion de trajets et renommages d'entraînements.")
-st.write("")
+
+with st.expander("🏃 Plan Marathon Sub-3h", expanded=False):
+    render_marathon_plan()
 
 # Instantiate application coordinator
 service = StravaService()
@@ -350,7 +337,6 @@ if len(selected_activities) >= 2:
 # ==========================================
 st.write("")
 st.divider()
-
 st.markdown("### 📊 État des Équipements")
 st.write("")
 
