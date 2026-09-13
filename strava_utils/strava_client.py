@@ -52,7 +52,7 @@ class StravaAPIClient:
     @st.cache_data(ttl=600)  # type: ignore[misc]
     def fetch_streams(_self, activity_id: int) -> Any:
         """Retrieve activity streams"""
-        url = f"{STRAVA_URL}/{STRAVA_SUFFIX_ACTIVITY}{activity_id}/streams"
+        url = f"{STRAVA_URL}/{STRAVA_SUFFIX_ACTIVITY}/{activity_id}/streams"
         params = {"keys": "latlng,time,altitude,heartrate", "key_by_type": "true"}
         res = requests.get(url, headers=_self._build_header(), params=params)
         return res.json() if res.status_code == 200 else {}
