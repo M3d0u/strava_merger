@@ -1,0 +1,2079 @@
+<file path="Plan_Marathon_Sub3h_Interactif_2.html">
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Marathon Sub-3h (18 Semaines)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-orange: #f97316;
+            --accent-blue: #38bdf8;
+            --accent-green: #22c55e;
+            --accent-purple: #a855f7;
+            --accent-red: #ef4444;
+            --accent-yellow: #eab308;
+            --border-color: #334155;
+            --card-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            padding: 24px 16px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 28px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-title h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #f97316, #fb923c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .header-title p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            padding: 10px 16px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-badge .value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-orange);
+        }
+
+        .stat-badge .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ALLURES CIBLES */
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #f1f5f9;
+        }
+
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: var(--accent-orange);
+            border-radius: 2px;
+        }
+
+        .paces-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 36px;
+        }
+
+        .pace-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            padding: 16px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .pace-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-orange);
+        }
+
+        .pace-code {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+        }
+
+        .pace-EF { background: rgba(56, 189, 248, 0.2); color: var(--accent-blue); }
+        .pace-SL { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+        .pace-AS42 { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+        .pace-SEUIL { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+        .pace-FRAC { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+        .pace-RECUP { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+
+        .pace-type {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .pace-val {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* FILTER & CONTROLS */
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: var(--bg-card);
+            padding: 16px 20px;
+            border-radius: var(--card-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--accent-orange);
+            color: #fff;
+            border-color: var(--accent-orange);
+        }
+
+        .export-all-btn {
+            background: linear-gradient(135deg, var(--accent-orange), #ea580c);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+            transition: all 0.2s;
+        }
+
+        .export-all-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+        }
+
+        /* CALENDAR WEEKS */
+        .week-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .week-header {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .week-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .week-badge {
+            background: var(--accent-orange);
+            color: #fff;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .week-phase {
+            font-weight: 600;
+            color: #f1f5f9;
+            font-size: 1rem;
+        }
+
+        .week-note {
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: var(--accent-blue);
+        }
+
+        .week-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .week-vol {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            background: rgba(34, 197, 94, 0.1);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .btn-export-week {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-export-week:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--text-muted);
+        }
+
+        /* DRAGGABLE GRID */
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            padding: 16px;
+            background: #0f172a;
+        }
+
+        @media (max-width: 1100px) {
+            .days-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .days-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .day-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            cursor: grab;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+            min-height: 140px;
+        }
+
+        .day-card:hover {
+            border-color: #475569;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .day-card.dragging {
+            opacity: 0.4;
+            transform: scale(0.95);
+            border: 2px dashed var(--accent-orange);
+        }
+
+        .day-card.drag-over {
+            border: 2px solid var(--accent-blue);
+            background-color: var(--bg-card-hover);
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .day-name {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #f1f5f9;
+        }
+
+        .day-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .day-body {
+            flex-grow: 1;
+            margin-bottom: 8px;
+        }
+
+        .workout-type {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-orange);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .workout-type.type-repos { color: var(--text-muted); }
+        .workout-type.type-ef { color: var(--accent-blue); }
+        .workout-type.type-sl { color: var(--accent-green); }
+        .workout-type.type-as42 { color: var(--accent-orange); }
+        .workout-type.type-seuil { color: var(--accent-purple); }
+        .workout-type.type-frac { color: var(--accent-red); }
+
+        .workout-detail {
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            line-height: 1.3;
+        }
+
+        .day-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .workout-duration {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .btn-export-day {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: color 0.2s;
+        }
+
+        .btn-export-day:hover {
+            color: var(--accent-orange);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .drag-handle {
+            color: var(--text-muted);
+            cursor: grab;
+            font-size: 0.8rem;
+            opacity: 0.5;
+        }
+
+        .drag-handle:hover {
+            opacity: 1;
+        }
+
+        /* Toast notification */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--accent-orange);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1000;
+            font-size: 0.88rem;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ALLURES CIBLES -->
+    <h2 class="section-title">Allures Cibles</h2>
+    <div class="paces-grid" id="paces-grid"></div>
+
+    <!-- CONTROLS & FILTER -->
+    <div class="controls-bar">
+        <div class="filter-buttons">
+            <button class="filter-btn active" onclick="filterPhase('ALL')">Toutes les phases</button>
+            <button class="filter-btn" onclick="filterPhase('PHASE 1')">Phase 1 (Base)</button>
+            <button class="filter-btn" onclick="filterPhase('PHASE 2')">Phase 2 (Spécifique)</button>
+            <button class="filter-btn" onclick="filterPhase('PHASE 3')">Phase 3 (Pic)</button>
+            <button class="filter-btn" onclick="filterPhase('PHASE 4')">Phase 4 (Affûtage)</button>
+        </div>
+        <button class="export-all-btn" onclick="exportFullCalendarICS()">
+            📅 Exporter le plan complet (.ICS)
+        </button>
+    </div>
+
+    <!-- CALENDAR WEEKS -->
+    <div id="calendar-weeks"></div>
+</div>
+
+<div id="toast">
+    <span>💡 Fichier .ics généré ! Importation possible dans Google Agenda.</span>
+</div>
+
+<script>
+    // Embedded Data
+    const targetPaces = [
+  {
+    "code": "EF",
+    "type": "Footing facile / EF",
+    "pace": "5'10/km"
+  },
+  {
+    "code": "SL",
+    "type": "Sortie longue (facile)",
+    "pace": "5'00-5'05/km"
+  },
+  {
+    "code": "AS42",
+    "type": "Allure Marathon",
+    "pace": "4'14/km"
+  },
+  {
+    "code": "SEUIL",
+    "type": "Tempo / Seuil",
+    "pace": "3'55-4'00/km"
+  },
+  {
+    "code": "FRAC",
+    "type": "Fractionné court",
+    "pace": "3'40-3'55/km"
+  },
+  {
+    "code": "RECUP",
+    "type": "Jog récupération",
+    "pace": "~6'30/km"
+  }
+];
+    let weeksData = [
+  {
+    "num": 1,
+    "phase": "PHASE 1 - Base Foncière",
+    "note": "Post-Marathon",
+    "total": "Volume Course: ~26 km",
+    "days": [
+      {
+        "id": "s1-d1",
+        "day_name": "Lundi",
+        "date": "14/09/2026",
+        "iso_date": "2026-09-14",
+        "title": "Repos complet",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s1-d2",
+        "day_name": "Mardi",
+        "date": "15/09/2026",
+        "iso_date": "2026-09-15",
+        "title": "Repos",
+        "detail": "Vélotaf seul, pas de course",
+        "duration": ""
+      },
+      {
+        "id": "s1-d3",
+        "day_name": "Mercredi",
+        "date": "16/09/2026",
+        "iso_date": "2026-09-16",
+        "title": "🏃 EF très facile",
+        "detail": "6 km @5'20/km",
+        "duration": "32 min"
+      },
+      {
+        "id": "s1-d4",
+        "day_name": "Jeudi",
+        "date": "17/09/2026",
+        "iso_date": "2026-09-17",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s1-d5",
+        "day_name": "Vendredi",
+        "date": "18/09/2026",
+        "iso_date": "2026-09-18",
+        "title": "🏃 EF très facile",
+        "detail": "7 km @5'20/km",
+        "duration": "37 min"
+      },
+      {
+        "id": "s1-d6",
+        "day_name": "Samedi",
+        "date": "19/09/2026",
+        "iso_date": "2026-09-19",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s1-d7",
+        "day_name": "Dimanche",
+        "date": "20/09/2026",
+        "iso_date": "2026-09-20",
+        "title": "🏃 SL très facile",
+        "detail": "13 km @5'15/km",
+        "duration": "68 min"
+      }
+    ]
+  },
+  {
+    "num": 2,
+    "phase": "PHASE 1 - Base Foncière",
+    "note": "",
+    "total": "Volume Course: ~37 km",
+    "days": [
+      {
+        "id": "s2-d1",
+        "day_name": "Lundi",
+        "date": "21/09/2026",
+        "iso_date": "2026-09-21",
+        "title": "🏋️‍♀️ Push + Renfo",
+        "detail": "Push habituel + 15-20 min renfo bas du corps/gainage",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s2-d2",
+        "day_name": "Mardi",
+        "date": "22/09/2026",
+        "iso_date": "2026-09-22",
+        "title": "🏃 FRAC",
+        "detail": "Éch. 2km EF + 6x400m @3'50/km (récup 1'30 jog) + RAC 2km EF",
+        "duration": "~45 min"
+      },
+      {
+        "id": "s2-d3",
+        "day_name": "Mercredi",
+        "date": "23/09/2026",
+        "iso_date": "2026-09-23",
+        "title": "🏃 EF",
+        "detail": "7 km @5'10/km",
+        "duration": "36 min"
+      },
+      {
+        "id": "s2-d4",
+        "day_name": "Jeudi",
+        "date": "24/09/2026",
+        "iso_date": "2026-09-24",
+        "title": "🏋️‍♀️ Pull + Renfo",
+        "detail": "Pull habituel + 15-20 min renfo bas du corps/gainage",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s2-d5",
+        "day_name": "Vendredi",
+        "date": "25/09/2026",
+        "iso_date": "2026-09-25",
+        "title": "🏃 EF",
+        "detail": "7 km @5'10/km",
+        "duration": "36 min"
+      },
+      {
+        "id": "s2-d6",
+        "day_name": "Samedi",
+        "date": "26/09/2026",
+        "iso_date": "2026-09-26",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s2-d7",
+        "day_name": "Dimanche",
+        "date": "27/09/2026",
+        "iso_date": "2026-09-27",
+        "title": "🏃 SL",
+        "detail": "16 km @5'00/km",
+        "duration": "80 min"
+      }
+    ]
+  },
+  {
+    "num": 3,
+    "phase": "PHASE 1 - Base Foncière",
+    "note": "",
+    "total": "Volume Course: ~39 km",
+    "days": [
+      {
+        "id": "s3-d1",
+        "day_name": "Lundi",
+        "date": "28/09/2026",
+        "iso_date": "2026-09-28",
+        "title": "🏋️‍♀️ Push + Renfo",
+        "detail": "Push habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s3-d2",
+        "day_name": "Mardi",
+        "date": "29/09/2026",
+        "iso_date": "2026-09-29",
+        "title": "🏃 SEUIL",
+        "detail": "Éch. 2km EF + 20 min continu @4'00/km (~5km) + RAC 2km EF",
+        "duration": "~45 min"
+      },
+      {
+        "id": "s3-d3",
+        "day_name": "Mercredi",
+        "date": "30/09/2026",
+        "iso_date": "2026-09-30",
+        "title": "🏃 EF",
+        "detail": "6 km @5'10/km",
+        "duration": "31 min"
+      },
+      {
+        "id": "s3-d4",
+        "day_name": "Jeudi",
+        "date": "01/10/2026",
+        "iso_date": "2026-10-01",
+        "title": "🏋️‍♀️ Pull + Renfo",
+        "detail": "Pull habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s3-d5",
+        "day_name": "Vendredi",
+        "date": "02/10/2026",
+        "iso_date": "2026-10-02",
+        "title": "🏃 EF",
+        "detail": "6 km @5'10/km",
+        "duration": "31 min"
+      },
+      {
+        "id": "s3-d6",
+        "day_name": "Samedi",
+        "date": "03/10/2026",
+        "iso_date": "2026-10-03",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s3-d7",
+        "day_name": "Dimanche",
+        "date": "04/10/2026",
+        "iso_date": "2026-10-04",
+        "title": "🏃 SL",
+        "detail": "18 km @5'00/km",
+        "duration": "90 min"
+      }
+    ]
+  },
+  {
+    "num": 4,
+    "phase": "PHASE 1 - Base Foncière",
+    "note": "",
+    "total": "Volume Course: ~43 km",
+    "days": [
+      {
+        "id": "s4-d1",
+        "day_name": "Lundi",
+        "date": "05/10/2026",
+        "iso_date": "2026-10-05",
+        "title": "🏋️‍♀️ Push + Renfo",
+        "detail": "Push habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s4-d2",
+        "day_name": "Mardi",
+        "date": "06/10/2026",
+        "iso_date": "2026-10-06",
+        "title": "🏃 FRAC",
+        "detail": "Éch. 2km EF + 5x1000m @3'55/km (récup 2' jog) + RAC 2km EF",
+        "duration": "~50 min"
+      },
+      {
+        "id": "s4-d3",
+        "day_name": "Mercredi",
+        "date": "07/10/2026",
+        "iso_date": "2026-10-07",
+        "title": "🏃 EF",
+        "detail": "7 km @5'10/km",
+        "duration": "36 min"
+      },
+      {
+        "id": "s4-d4",
+        "day_name": "Jeudi",
+        "date": "08/10/2026",
+        "iso_date": "2026-10-08",
+        "title": "🏋️‍♀️ Pull + Renfo",
+        "detail": "Pull habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s4-d5",
+        "day_name": "Vendredi",
+        "date": "09/10/2026",
+        "iso_date": "2026-10-09",
+        "title": "🏃 EF",
+        "detail": "7 km @5'10/km",
+        "duration": "36 min"
+      },
+      {
+        "id": "s4-d6",
+        "day_name": "Samedi",
+        "date": "10/10/2026",
+        "iso_date": "2026-10-10",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s4-d7",
+        "day_name": "Dimanche",
+        "date": "11/10/2026",
+        "iso_date": "2026-10-11",
+        "title": "🏃 SL",
+        "detail": "20 km @5'00/km",
+        "duration": "100 min"
+      }
+    ]
+  },
+  {
+    "num": 5,
+    "phase": "PHASE 1 - Base Foncière",
+    "note": "",
+    "total": "Volume Course: ~48 km",
+    "days": [
+      {
+        "id": "s5-d1",
+        "day_name": "Lundi",
+        "date": "12/10/2026",
+        "iso_date": "2026-10-12",
+        "title": "🏋️‍♀️ Push + Renfo",
+        "detail": "Push habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s5-d2",
+        "day_name": "Mardi",
+        "date": "13/10/2026",
+        "iso_date": "2026-10-13",
+        "title": "🏃 SEUIL",
+        "detail": "Éch. 2km EF + 25 min continu @3'58/km (~6.3km) + RAC 2km EF",
+        "duration": "~54 min"
+      },
+      {
+        "id": "s5-d3",
+        "day_name": "Mercredi",
+        "date": "14/10/2026",
+        "iso_date": "2026-10-14",
+        "title": "🏃 EF",
+        "detail": "8 km @5'10/km",
+        "duration": "41 min"
+      },
+      {
+        "id": "s5-d4",
+        "day_name": "Jeudi",
+        "date": "15/10/2026",
+        "iso_date": "2026-10-15",
+        "title": "🏋️‍♀️ Pull + Renfo",
+        "detail": "Pull habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s5-d5",
+        "day_name": "Vendredi",
+        "date": "16/10/2026",
+        "iso_date": "2026-10-16",
+        "title": "🏃 EF",
+        "detail": "8 km @5'10/km",
+        "duration": "41 min"
+      },
+      {
+        "id": "s5-d6",
+        "day_name": "Samedi",
+        "date": "17/10/2026",
+        "iso_date": "2026-10-17",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s5-d7",
+        "day_name": "Dimanche",
+        "date": "18/10/2026",
+        "iso_date": "2026-10-18",
+        "title": "🏃 SL",
+        "detail": "22 km @5'00/km",
+        "duration": "110 min"
+      }
+    ]
+  },
+  {
+    "num": 6,
+    "phase": "PHASE 1 - Base Foncière",
+    "note": "Semaine allégée",
+    "total": "Volume Course: ~35 km",
+    "days": [
+      {
+        "id": "s6-d1",
+        "day_name": "Lundi",
+        "date": "19/10/2026",
+        "iso_date": "2026-10-19",
+        "title": "🏋️‍♀️ Push + Renfo",
+        "detail": "Push habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s6-d2",
+        "day_name": "Mardi",
+        "date": "20/10/2026",
+        "iso_date": "2026-10-20",
+        "title": "🏃 FRAC",
+        "detail": "Éch. 2km EF + 6x400m @3'50/km (récup 1'30 jog) + RAC 2km EF",
+        "duration": "~42 min"
+      },
+      {
+        "id": "s6-d3",
+        "day_name": "Mercredi",
+        "date": "21/10/2026",
+        "iso_date": "2026-10-21",
+        "title": "🏃 EF",
+        "detail": "6 km @5'10/km",
+        "duration": "31 min"
+      },
+      {
+        "id": "s6-d4",
+        "day_name": "Jeudi",
+        "date": "22/10/2026",
+        "iso_date": "2026-10-22",
+        "title": "🏋️‍♀️ Pull",
+        "detail": "Pull habituel (pas de renfo coureur cette semaine)",
+        "duration": "~1h00"
+      },
+      {
+        "id": "s6-d5",
+        "day_name": "Vendredi",
+        "date": "23/10/2026",
+        "iso_date": "2026-10-23",
+        "title": "🏃 EF",
+        "detail": "6 km @5'10/km",
+        "duration": "31 min"
+      },
+      {
+        "id": "s6-d6",
+        "day_name": "Samedi",
+        "date": "24/10/2026",
+        "iso_date": "2026-10-24",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s6-d7",
+        "day_name": "Dimanche",
+        "date": "25/10/2026",
+        "iso_date": "2026-10-25",
+        "title": "🏃 SL",
+        "detail": "16 km @5'05/km",
+        "duration": "81 min"
+      }
+    ]
+  },
+  {
+    "num": 7,
+    "phase": "PHASE 2 - Construction Spécifique",
+    "note": "",
+    "total": "Volume Course: ~50 km",
+    "days": [
+      {
+        "id": "s7-d1",
+        "day_name": "Lundi",
+        "date": "26/10/2026",
+        "iso_date": "2026-10-26",
+        "title": "🏋️‍♀️ Push + Renfo",
+        "detail": "Push habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s7-d2",
+        "day_name": "Mardi",
+        "date": "27/10/2026",
+        "iso_date": "2026-10-27",
+        "title": "🏃 AS42",
+        "detail": "Éch. 2km EF + 3x2km @4'14/km (récup 2' jog) + RAC 2km EF",
+        "duration": "~55 min"
+      },
+      {
+        "id": "s7-d3",
+        "day_name": "Mercredi",
+        "date": "28/10/2026",
+        "iso_date": "2026-10-28",
+        "title": "🏃 EF",
+        "detail": "8 km @5'10/km",
+        "duration": "41 min"
+      },
+      {
+        "id": "s7-d4",
+        "day_name": "Jeudi",
+        "date": "29/10/2026",
+        "iso_date": "2026-10-29",
+        "title": "🏋️‍♀️ Pull + Renfo",
+        "detail": "Pull habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s7-d5",
+        "day_name": "Vendredi",
+        "date": "30/10/2026",
+        "iso_date": "2026-10-30",
+        "title": "🏃 EF",
+        "detail": "8 km @5'10/km",
+        "duration": "41 min"
+      },
+      {
+        "id": "s7-d6",
+        "day_name": "Samedi",
+        "date": "31/10/2026",
+        "iso_date": "2026-10-31",
+        "title": "Repos",
+        "detail": "Option: 20 min très facile",
+        "duration": ""
+      },
+      {
+        "id": "s7-d7",
+        "day_name": "Dimanche",
+        "date": "01/11/2026",
+        "iso_date": "2026-11-01",
+        "title": "🏃 SL Spécifique",
+        "detail": "24 km: 16 km @5'00/km (80') + 8 km @4'14/km (34')",
+        "duration": "~114 min"
+      }
+    ]
+  },
+  {
+    "num": 8,
+    "phase": "PHASE 2 - Construction Spécifique",
+    "note": "",
+    "total": "Volume Course: ~54 km",
+    "days": [
+      {
+        "id": "s8-d1",
+        "day_name": "Lundi",
+        "date": "02/11/2026",
+        "iso_date": "2026-11-02",
+        "title": "🏋️‍♀️ Push + Renfo",
+        "detail": "Push habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s8-d2",
+        "day_name": "Mardi",
+        "date": "03/11/2026",
+        "iso_date": "2026-11-03",
+        "title": "🏃 SEUIL",
+        "detail": "Éch. 2km EF + 30 min continu @3'58/km (~7.6km) + RAC 2km EF",
+        "duration": "~58 min"
+      },
+      {
+        "id": "s8-d3",
+        "day_name": "Mercredi",
+        "date": "04/11/2026",
+        "iso_date": "2026-11-04",
+        "title": "🏃 EF",
+        "detail": "8 km @5'10/km",
+        "duration": "41 min"
+      },
+      {
+        "id": "s8-d4",
+        "day_name": "Jeudi",
+        "date": "05/11/2026",
+        "iso_date": "2026-11-05",
+        "title": "🏋️‍♀️ Pull + Renfo",
+        "detail": "Pull habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s8-d5",
+        "day_name": "Vendredi",
+        "date": "06/11/2026",
+        "iso_date": "2026-11-06",
+        "title": "🏃 EF",
+        "detail": "8 km @5'10/km",
+        "duration": "41 min"
+      },
+      {
+        "id": "s8-d6",
+        "day_name": "Samedi",
+        "date": "07/11/2026",
+        "iso_date": "2026-11-07",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s8-d7",
+        "day_name": "Dimanche",
+        "date": "08/11/2026",
+        "iso_date": "2026-11-08",
+        "title": "🏃 SL Spécifique",
+        "detail": "26 km: 16 km @5'00/km (80') + 10 km @4'14/km (42')",
+        "duration": "~122 min"
+      }
+    ]
+  },
+  {
+    "num": 9,
+    "phase": "PHASE 2 - Construction Spécifique",
+    "note": "Semaine allégée",
+    "total": "Volume Course: ~42 km",
+    "days": [
+      {
+        "id": "s9-d1",
+        "day_name": "Lundi",
+        "date": "09/11/2026",
+        "iso_date": "2026-11-09",
+        "title": "🏋️‍♀️ Push + Renfo",
+        "detail": "Push habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s9-d2",
+        "day_name": "Mardi",
+        "date": "10/11/2026",
+        "iso_date": "2026-11-10",
+        "title": "🏃 SEUIL",
+        "detail": "Éch. 2km EF + 6x1000m @3'58/km (récup 2' jog) + RAC 2km EF",
+        "duration": "~54 min"
+      },
+      {
+        "id": "s9-d3",
+        "day_name": "Mercredi",
+        "date": "11/11/2026",
+        "iso_date": "2026-11-11",
+        "title": "🏃 EF",
+        "detail": "6 km @5'10/km",
+        "duration": "31 min"
+      },
+      {
+        "id": "s9-d4",
+        "day_name": "Jeudi",
+        "date": "12/11/2026",
+        "iso_date": "2026-11-12",
+        "title": "🏋️‍♀️ Pull",
+        "detail": "Pull habituel (pas de renfo coureur)",
+        "duration": "~1h00"
+      },
+      {
+        "id": "s9-d5",
+        "day_name": "Vendredi",
+        "date": "13/11/2026",
+        "iso_date": "2026-11-13",
+        "title": "🏃 EF",
+        "detail": "6 km @5'10/km",
+        "duration": "31 min"
+      },
+      {
+        "id": "s9-d6",
+        "day_name": "Samedi",
+        "date": "14/11/2026",
+        "iso_date": "2026-11-14",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s9-d7",
+        "day_name": "Dimanche",
+        "date": "15/11/2026",
+        "iso_date": "2026-11-15",
+        "title": "🏃 SL",
+        "detail": "20 km @5'05/km",
+        "duration": "102 min"
+      }
+    ]
+  },
+  {
+    "num": 10,
+    "phase": "PHASE 2 - Construction Spécifique",
+    "note": "Test Ravitaillement",
+    "total": "Volume Course: ~56 km",
+    "days": [
+      {
+        "id": "s10-d1",
+        "day_name": "Lundi",
+        "date": "16/11/2026",
+        "iso_date": "2026-11-16",
+        "title": "🏋️‍♀️ Push + Renfo",
+        "detail": "Push habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s10-d2",
+        "day_name": "Mardi",
+        "date": "17/11/2026",
+        "iso_date": "2026-11-17",
+        "title": "🏃 AS42",
+        "detail": "Éch. 2km EF + 4x2km @4'14/km (récup 2' jog) + RAC 2km EF",
+        "duration": "~64 min"
+      },
+      {
+        "id": "s10-d3",
+        "day_name": "Mercredi",
+        "date": "18/11/2026",
+        "iso_date": "2026-11-18",
+        "title": "🏃 EF",
+        "detail": "8 km @5'10/km",
+        "duration": "41 min"
+      },
+      {
+        "id": "s10-d4",
+        "day_name": "Jeudi",
+        "date": "19/11/2026",
+        "iso_date": "2026-11-19",
+        "title": "🏋️‍♀️ Pull + Renfo",
+        "detail": "Pull habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s10-d5",
+        "day_name": "Vendredi",
+        "date": "20/11/2026",
+        "iso_date": "2026-11-20",
+        "title": "🏃 EF",
+        "detail": "8 km @5'10/km",
+        "duration": "41 min"
+      },
+      {
+        "id": "s10-d6",
+        "day_name": "Samedi",
+        "date": "21/11/2026",
+        "iso_date": "2026-11-21",
+        "title": "Repos",
+        "detail": "Option: 20 min très facile",
+        "duration": ""
+      },
+      {
+        "id": "s10-d7",
+        "day_name": "Dimanche",
+        "date": "22/11/2026",
+        "iso_date": "2026-11-22",
+        "title": "🏃 SL Spécifique",
+        "detail": "28 km: 16 km @5'00 + 12 km @4'14 - Test Ravitaillement: 1 gel/ 25-30g glucides / 40-45min",
+        "duration": "~131 min"
+      }
+    ]
+  },
+  {
+    "num": 11,
+    "phase": "PHASE 2 - Construction Spécifique",
+    "note": "Test Semi-Marathon",
+    "total": "Volume Course: ~35-40 km",
+    "days": [
+      {
+        "id": "s11-d1",
+        "day_name": "Lundi",
+        "date": "23/11/2026",
+        "iso_date": "2026-11-23",
+        "title": "🏋️‍♀️ Push + Renfo",
+        "detail": "Push habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s11-d2",
+        "day_name": "Mardi",
+        "date": "24/11/2026",
+        "iso_date": "2026-11-24",
+        "title": "🏃 EF",
+        "detail": "8 km @5'10/km",
+        "duration": "41 min"
+      },
+      {
+        "id": "s11-d3",
+        "day_name": "Mercredi",
+        "date": "25/11/2026",
+        "iso_date": "2026-11-25",
+        "title": "🏋️‍♀️ Pull + Renfo",
+        "detail": "Pull habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s11-d4",
+        "day_name": "Jeudi",
+        "date": "26/11/2026",
+        "iso_date": "2026-11-26",
+        "title": "🏃 EF + Lignes",
+        "detail": "6 km facile + 4x100m progressives",
+        "duration": "~35 min"
+      },
+      {
+        "id": "s11-d5",
+        "day_name": "Vendredi",
+        "date": "27/11/2026",
+        "iso_date": "2026-11-27",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s11-d6",
+        "day_name": "Samedi",
+        "date": "28/11/2026",
+        "iso_date": "2026-11-28",
+        "title": "Repos",
+        "detail": "Préparation course, recharge glucidique",
+        "duration": ""
+      },
+      {
+        "id": "s11-d7",
+        "day_name": "Dimanche",
+        "date": "29/11/2026",
+        "iso_date": "2026-11-29",
+        "title": "🏃 SEMI TEST",
+        "detail": "Semi-marathon officiel (ou 24km dont 16km @4'14). Cible: 1h27-1h29",
+        "duration": "~87-89 min"
+      }
+    ]
+  },
+  {
+    "num": 12,
+    "phase": "PHASE 2 - Construction Spécifique",
+    "note": "",
+    "total": "Volume Course: ~47 km",
+    "days": [
+      {
+        "id": "s12-d1",
+        "day_name": "Lundi",
+        "date": "30/11/2026",
+        "iso_date": "2026-11-30",
+        "title": "🏋️‍♀️ Push + Renfo",
+        "detail": "Push habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s12-d2",
+        "day_name": "Mardi",
+        "date": "01/12/2026",
+        "iso_date": "2026-12-01",
+        "title": "🏃 SEUIL",
+        "detail": "Éch. 2km EF + 5x1000m @3'55/km (récup 2' jog) + RAC 2km EF",
+        "duration": "~48 min"
+      },
+      {
+        "id": "s12-d3",
+        "day_name": "Mercredi",
+        "date": "02/12/2026",
+        "iso_date": "2026-12-02",
+        "title": "🏃 EF",
+        "detail": "8 km @5'10/km",
+        "duration": "41 min"
+      },
+      {
+        "id": "s12-d4",
+        "day_name": "Jeudi",
+        "date": "03/12/2026",
+        "iso_date": "2026-12-03",
+        "title": "🏋️‍♀️ Pull + Renfo",
+        "detail": "Pull habituel + 15-20 min renfo",
+        "duration": "~1h20"
+      },
+      {
+        "id": "s12-d5",
+        "day_name": "Vendredi",
+        "date": "04/12/2026",
+        "iso_date": "2026-12-04",
+        "title": "🏃 EF",
+        "detail": "8 km @5'10/km",
+        "duration": "41 min"
+      },
+      {
+        "id": "s12-d6",
+        "day_name": "Samedi",
+        "date": "05/12/2026",
+        "iso_date": "2026-12-05",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s12-d7",
+        "day_name": "Dimanche",
+        "date": "06/12/2026",
+        "iso_date": "2026-12-06",
+        "title": "🏃 SL",
+        "detail": "22 km @5'00/km",
+        "duration": "110 min"
+      }
+    ]
+  },
+  {
+    "num": 13,
+    "phase": "PHASE 3 - Pic Spécifique",
+    "note": "Allégement Muscu",
+    "total": "Volume Course: ~61 km",
+    "days": [
+      {
+        "id": "s13-d1",
+        "day_name": "Lundi",
+        "date": "07/12/2026",
+        "iso_date": "2026-12-07",
+        "title": "🏋️‍♀️ Push léger + Renfo",
+        "detail": "Volume Push réduit de 1/3 + 15 min renfo",
+        "duration": "~55 min"
+      },
+      {
+        "id": "s13-d2",
+        "day_name": "Mardi",
+        "date": "08/12/2026",
+        "iso_date": "2026-12-08",
+        "title": "🏃 AS42",
+        "detail": "Éch. 2km EF + 3x3km @4'14/km (récup 2' jog) + RAC 2km EF",
+        "duration": "~68 min"
+      },
+      {
+        "id": "s13-d3",
+        "day_name": "Mercredi",
+        "date": "09/12/2026",
+        "iso_date": "2026-12-09",
+        "title": "🏃 EF",
+        "detail": "9 km @5'10/km",
+        "duration": "46 min"
+      },
+      {
+        "id": "s13-d4",
+        "day_name": "Jeudi",
+        "date": "10/12/2026",
+        "iso_date": "2026-12-10",
+        "title": "🏋️‍♀️ Pull léger",
+        "detail": "Volume Pull réduit de 1/3 (pas de renfo coureur)",
+        "duration": "~40 min"
+      },
+      {
+        "id": "s13-d5",
+        "day_name": "Vendredi",
+        "date": "11/12/2026",
+        "iso_date": "2026-12-11",
+        "title": "🏃 EF",
+        "detail": "9 km @5'10/km",
+        "duration": "46 min"
+      },
+      {
+        "id": "s13-d6",
+        "day_name": "Samedi",
+        "date": "12/12/2026",
+        "iso_date": "2026-12-12",
+        "title": "Repos",
+        "detail": "Option: 20 min très facile",
+        "duration": ""
+      },
+      {
+        "id": "s13-d7",
+        "day_name": "Dimanche",
+        "date": "13/12/2026",
+        "iso_date": "2026-12-13",
+        "title": "🏃 SL Spécifique",
+        "detail": "30 km: 15 km @5'00 (75') + 15 km @4'14 (64') - Ravitaillement J-D",
+        "duration": "~139 min"
+      }
+    ]
+  },
+  {
+    "num": 14,
+    "phase": "PHASE 3 - Pic Spécifique",
+    "note": "PIC MAX",
+    "total": "Volume Course: ~62 km",
+    "days": [
+      {
+        "id": "s14-d1",
+        "day_name": "Lundi",
+        "date": "14/12/2026",
+        "iso_date": "2026-12-14",
+        "title": "🏋️‍♀️ Push léger + Renfo",
+        "detail": "Volume réduit + 15 min renfo",
+        "duration": "~55 min"
+      },
+      {
+        "id": "s14-d2",
+        "day_name": "Mardi",
+        "date": "15/12/2026",
+        "iso_date": "2026-12-15",
+        "title": "🏃 SEUIL",
+        "detail": "Éch. 2km EF + 25 min continu @3'58/km (~6.3km) + RAC 2km EF",
+        "duration": "~54 min"
+      },
+      {
+        "id": "s14-d3",
+        "day_name": "Mercredi",
+        "date": "16/12/2026",
+        "iso_date": "2026-12-16",
+        "title": "🏃 EF",
+        "detail": "10 km @5'10/km",
+        "duration": "52 min"
+      },
+      {
+        "id": "s14-d4",
+        "day_name": "Jeudi",
+        "date": "17/12/2026",
+        "iso_date": "2026-12-17",
+        "title": "🏋️‍♀️ Pull léger",
+        "detail": "Volume réduit",
+        "duration": "~40 min"
+      },
+      {
+        "id": "s14-d5",
+        "day_name": "Vendredi",
+        "date": "18/12/2026",
+        "iso_date": "2026-12-18",
+        "title": "🏃 EF",
+        "detail": "10 km @5'10/km",
+        "duration": "52 min"
+      },
+      {
+        "id": "s14-d6",
+        "day_name": "Samedi",
+        "date": "19/12/2026",
+        "iso_date": "2026-12-19",
+        "title": "Repos",
+        "detail": "Bien manger / dormir",
+        "duration": ""
+      },
+      {
+        "id": "s14-d7",
+        "day_name": "Dimanche",
+        "date": "20/12/2026",
+        "iso_date": "2026-12-20",
+        "title": "🏃 SL Spécifique",
+        "detail": "32 km (Sortie clé): 14 km @5'00 (70') + 18 km @4'14 (76')",
+        "duration": "~146 min"
+      }
+    ]
+  },
+  {
+    "num": 15,
+    "phase": "PHASE 3 - Pic Spécifique",
+    "note": "Allégement Muscu",
+    "total": "Volume Course: ~48 km",
+    "days": [
+      {
+        "id": "s15-d1",
+        "day_name": "Lundi",
+        "date": "21/12/2026",
+        "iso_date": "2026-12-21",
+        "title": "🏋️‍♀️ Push léger + Renfo",
+        "detail": "Volume réduit + 15 min renfo",
+        "duration": "~55 min"
+      },
+      {
+        "id": "s15-d2",
+        "day_name": "Mardi",
+        "date": "22/12/2026",
+        "iso_date": "2026-12-22",
+        "title": "🏃 AS42",
+        "detail": "Éch. 2km EF + 4x2km @4'14/km (récup 2' jog) + RAC 2km EF",
+        "duration": "~64 min"
+      },
+      {
+        "id": "s15-d3",
+        "day_name": "Mercredi",
+        "date": "23/12/2026",
+        "iso_date": "2026-12-23",
+        "title": "🏃 EF",
+        "detail": "7 km @5'10/km",
+        "duration": "36 min"
+      },
+      {
+        "id": "s15-d4",
+        "day_name": "Jeudi",
+        "date": "24/12/2026",
+        "iso_date": "2026-12-24",
+        "title": "🏋️‍♀️ Pull léger",
+        "detail": "Volume réduit",
+        "duration": "~40 min"
+      },
+      {
+        "id": "s15-d5",
+        "day_name": "Vendredi",
+        "date": "25/12/2026",
+        "iso_date": "2026-12-25",
+        "title": "🏃 EF",
+        "detail": "7 km @5'10/km",
+        "duration": "36 min"
+      },
+      {
+        "id": "s15-d6",
+        "day_name": "Samedi",
+        "date": "26/12/2026",
+        "iso_date": "2026-12-26",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s15-d7",
+        "day_name": "Dimanche",
+        "date": "27/12/2026",
+        "iso_date": "2026-12-27",
+        "title": "🏃 SL",
+        "detail": "22 km @5'00/km",
+        "duration": "110 min"
+      }
+    ]
+  },
+  {
+    "num": 16,
+    "phase": "PHASE 4 - Affûtage & Tapering",
+    "note": "Arrêt Muscu (-25% Vol.)",
+    "total": "Volume Course: ~45 km",
+    "days": [
+      {
+        "id": "s16-d1",
+        "day_name": "Lundi",
+        "date": "28/12/2026",
+        "iso_date": "2026-12-28",
+        "title": "Repos",
+        "detail": "Arrêt complet Push/Pull et Renfo coureur dès cette semaine",
+        "duration": ""
+      },
+      {
+        "id": "s16-d2",
+        "day_name": "Mardi",
+        "date": "29/12/2026",
+        "iso_date": "2026-12-29",
+        "title": "🏃 AS42",
+        "detail": "Éch. 2km EF + 3x1.5km @4'14/km (récup 2' jog) + RAC 2km EF",
+        "duration": "~48 min"
+      },
+      {
+        "id": "s16-d3",
+        "day_name": "Mercredi",
+        "date": "30/12/2026",
+        "iso_date": "2026-12-30",
+        "title": "🏃 EF",
+        "detail": "6 km @5'10/km",
+        "duration": "31 min"
+      },
+      {
+        "id": "s16-d4",
+        "day_name": "Jeudi",
+        "date": "31/12/2026",
+        "iso_date": "2026-12-31",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s16-d5",
+        "day_name": "Vendredi",
+        "date": "01/01/2027",
+        "iso_date": "2027-01-01",
+        "title": "🏃 EF",
+        "detail": "6 km @5'10/km",
+        "duration": "31 min"
+      },
+      {
+        "id": "s16-d6",
+        "day_name": "Samedi",
+        "date": "02/01/2027",
+        "iso_date": "2027-01-02",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s16-d7",
+        "day_name": "Dimanche",
+        "date": "03/01/2027",
+        "iso_date": "2027-01-03",
+        "title": "🏃 SL Spécifique",
+        "detail": "24 km: 16 km @5'00/km (80') + 8 km @4'14/km (34')",
+        "duration": "~114 min"
+      }
+    ]
+  },
+  {
+    "num": 17,
+    "phase": "PHASE 4 - Affûtage & Tapering",
+    "note": "-45% Vol.",
+    "total": "Volume Course: ~35 km",
+    "days": [
+      {
+        "id": "s17-d1",
+        "day_name": "Lundi",
+        "date": "04/01/2027",
+        "iso_date": "2027-01-04",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s17-d2",
+        "day_name": "Mardi",
+        "date": "05/01/2027",
+        "iso_date": "2027-01-05",
+        "title": "🏃 AS42",
+        "detail": "Éch. 2km EF + 4x1km @4'14/km (récup 2' jog) + RAC 2km EF",
+        "duration": "~43 min"
+      },
+      {
+        "id": "s17-d3",
+        "day_name": "Mercredi",
+        "date": "06/01/2027",
+        "iso_date": "2027-01-06",
+        "title": "🏃 EF",
+        "detail": "6 km @5'10/km",
+        "duration": "31 min"
+      },
+      {
+        "id": "s17-d4",
+        "day_name": "Jeudi",
+        "date": "07/01/2027",
+        "iso_date": "2027-01-07",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s17-d5",
+        "day_name": "Vendredi",
+        "date": "08/01/2027",
+        "iso_date": "2027-01-08",
+        "title": "🏃 EF très facile",
+        "detail": "5 km @5'20/km",
+        "duration": "26 min"
+      },
+      {
+        "id": "s17-d6",
+        "day_name": "Samedi",
+        "date": "09/01/2027",
+        "iso_date": "2027-01-09",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s17-d7",
+        "day_name": "Dimanche",
+        "date": "10/01/2027",
+        "iso_date": "2027-01-10",
+        "title": "🏃 SL",
+        "detail": "16 km @5'05/km",
+        "duration": "81 min"
+      }
+    ]
+  },
+  {
+    "num": 18,
+    "phase": "PHASE 4 - Affûtage & Tapering",
+    "note": "RACE WEEK",
+    "total": "Volume Course: ~22 km (hors course)",
+    "days": [
+      {
+        "id": "s18-d1",
+        "day_name": "Lundi",
+        "date": "11/01/2027",
+        "iso_date": "2027-01-11",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s18-d2",
+        "day_name": "Mardi",
+        "date": "12/01/2027",
+        "iso_date": "2027-01-12",
+        "title": "🏃 Activation",
+        "detail": "20 min très facile + 4x20sec accélérations progressives",
+        "duration": "20 min"
+      },
+      {
+        "id": "s18-d3",
+        "day_name": "Mercredi",
+        "date": "13/01/2027",
+        "iso_date": "2027-01-13",
+        "title": "Repos",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s18-d4",
+        "day_name": "Jeudi",
+        "date": "14/01/2027",
+        "iso_date": "2027-01-14",
+        "title": "🏃 Activation AS42",
+        "detail": "8 km: très facile avec 3x3min @4'14/km au milieu",
+        "duration": "~42 min"
+      },
+      {
+        "id": "s18-d5",
+        "day_name": "Vendredi",
+        "date": "15/01/2027",
+        "iso_date": "2027-01-15",
+        "title": "Repos complet",
+        "detail": "",
+        "duration": ""
+      },
+      {
+        "id": "s18-d6",
+        "day_name": "Samedi",
+        "date": "16/01/2027",
+        "iso_date": "2027-01-16",
+        "title": "🏃 Activation légère",
+        "detail": "15-20 min très facile + quelques foulées + prépa dossier/gels",
+        "duration": "~20 min"
+      },
+      {
+        "id": "s18-d7",
+        "day_name": "Dimanche",
+        "date": "17/01/2027",
+        "iso_date": "2027-01-17",
+        "title": "🏃 MARATHON",
+        "detail": "Objectif Sub-3h (Allure 4'14-4'16/km)",
+        "duration": "~2h58-3h00"
+      }
+    ]
+  }
+];
+
+    // Render Paces
+    function renderPaces() {
+        const grid = document.getElementById('paces-grid');
+        grid.innerHTML = targetPaces.map(p => `
+            <div class="pace-card">
+                <span class="pace-code pace-${p.code}">${p.code}</span>
+                <div class="pace-type">${p.type}</div>
+                <div class="pace-val">${p.pace}</div>
+            </div>
+        `).join('');
+    }
+
+    // Get Type CSS Class
+    function getTypeClass(title) {
+        const t = title.toUpperCase();
+        if (t.includes('REPOS')) return 'type-repos';
+        if (t.includes('FRAC')) return 'type-frac';
+        if (t.includes('SEUIL')) return 'type-seuil';
+        if (t.includes('AS42')) return 'type-as42';
+        if (t.includes('SL')) return 'type-sl';
+        if (t.includes('EF')) return 'type-ef';
+        return 'type-ef';
+    }
+
+    // Render Weeks
+    function renderWeeks(filter = 'ALL') {
+        const container = document.getElementById('calendar-weeks');
+        container.innerHTML = '';
+
+        weeksData.forEach(week => {
+            if (filter !== 'ALL' && !week.phase.startsWith(filter)) return;
+
+            const weekEl = document.createElement('div');
+            weekEl.className = 'week-container';
+            weekEl.id = `week-${week.num}`;
+
+            weekEl.innerHTML = `
+                <div class="week-header">
+                    <div class="week-info">
+                        <span class="week-badge">Semaine ${week.num}</span>
+                        <span class="week-phase">${week.phase}</span>
+                        ${week.note ? `<span class="week-note">${week.note}</span>` : ''}
+                    </div>
+                    <div class="week-actions">
+                        <span class="week-vol">${week.total}</span>
+                        <button class="btn-export-week" onclick="exportWeekICS(${week.num})">
+                            📅 Exporter S${week.num}
+                        </button>
+                    </div>
+                </div>
+                <div class="days-grid" id="grid-week-${week.num}" data-week="${week.num}">
+                    ${week.days.map((day, idx) => renderDayCard(day, idx, week.num)).join('')}
+                </div>
+            `;
+
+            container.appendChild(weekEl);
+            setupDragAndDrop(`grid-week-${week.num}`, week.num);
+        });
+    }
+
+    function renderDayCard(day, index, weekNum) {
+        const typeClass = getTypeClass(day.title);
+        return `
+            <div class="day-card" 
+                 draggable="true" 
+                 id="${day.id}" 
+                 data-id="${day.id}"
+                 data-week="${weekNum}" 
+                 data-index="${index}">
+                <div class="day-header">
+                    <span class="day-name">${day.day_name}</span>
+                    <span class="day-date">${day.date}</span>
+                </div>
+                <div class="day-body">
+                    <div class="workout-type ${typeClass}">
+                        <span>${day.title}</span>
+                        <span class="drag-handle">⋮⋮</span>
+                    </div>
+                    <div class="workout-detail">${day.detail || 'Repos / Pas de séance'}</div>
+                </div>
+                <div class="day-footer">
+                    <span class="workout-duration">${day.duration ? '⏱️ ' + day.duration : ''}</span>
+                    ${!day.title.includes('Repos complet') && day.title !== 'Repos' ? `
+                        <button class="btn-export-day" title="Exporter cette séance" onclick="exportSingleDayICS('${day.id}')">
+                            📅
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // DRAG AND DROP HANDLERS
+    let draggedCard = null;
+
+    function setupDragAndDrop(gridId, weekNum) {
+        const grid = document.getElementById(gridId);
+        const cards = grid.querySelectorAll('.day-card');
+
+        cards.forEach(card => {
+            card.addEventListener('dragstart', (e) => {
+                draggedCard = card;
+                card.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', card.id);
+            });
+
+            card.addEventListener('dragend', () => {
+                card.classList.remove('dragging');
+                cards.forEach(c => c.classList.remove('drag-over'));
+                draggedCard = null;
+            });
+
+            card.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (card !== draggedCard) {
+                    card.classList.add('drag-over');
+                }
+            });
+
+            card.addEventListener('dragleave', () => {
+                card.classList.remove('drag-over');
+            });
+
+            card.addEventListener('drop', (e) => {
+                e.preventDefault();
+                card.classList.remove('drag-over');
+
+                if (draggedCard && draggedCard !== card) {
+                    const fromWeek = parseInt(draggedCard.dataset.week);
+                    const toWeek = parseInt(card.dataset.week);
+
+                    if (fromWeek === toWeek) {
+                        const fromIdx = parseInt(draggedCard.dataset.index);
+                        const toIdx = parseInt(card.dataset.index);
+
+                        // Swap workouts between days (keep original day_name and date)
+                        const weekObj = weeksData.find(w => w.num === fromWeek);
+                        
+                        const tempTitle = weekObj.days[fromIdx].title;
+                        const tempDetail = weekObj.days[fromIdx].detail;
+                        const tempDuration = weekObj.days[fromIdx].duration;
+
+                        weekObj.days[fromIdx].title = weekObj.days[toIdx].title;
+                        weekObj.days[fromIdx].detail = weekObj.days[toIdx].detail;
+                        weekObj.days[fromIdx].duration = weekObj.days[toIdx].duration;
+
+                        weekObj.days[toIdx].title = tempTitle;
+                        weekObj.days[toIdx].detail = tempDetail;
+                        weekObj.days[toIdx].duration = tempDuration;
+
+                        // Re-render week grid
+                        renderWeeks(currentFilter);
+                        showToast('🔄 Séance déplacée avec succès !');
+                    }
+                }
+            });
+        });
+    }
+
+    let currentFilter = 'ALL';
+    function filterPhase(phase) {
+        currentFilter = phase;
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.textContent.includes(phase) || (phase === 'ALL' && btn.textContent.includes('Toutes')));
+        });
+        renderWeeks(phase);
+    }
+
+    // ICS GENERATION & EXPORT
+    function generateICSContent(events) {
+        let ics = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//Plan Marathon Sub-3h//FR',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH'
+        ];
+
+        events.forEach(evt => {
+            if (!evt.title || evt.title === 'Repos' || evt.title === 'Repos complet') return;
+
+            // Format YYYYMMDD
+            const iso = evt.iso_date.replace(/-/g, '');
+            const uid = `marathon-sub3h-${evt.id}-${iso}@plan.com`;
+
+            ics.push('BEGIN:VEVENT');
+            ics.push(`UID:${uid}`);
+            ics.push(`DTSTAMP:${iso}T060000Z`);
+            ics.push(`DTSTART;VALUE=DATE:${iso}`);
+            ics.push(`SUMMARY:${evt.title} - Marathon Sub-3h`);
+            ics.push(`DESCRIPTION:${(evt.detail + ' ' + (evt.duration ? '(' + evt.duration + ')' : '')).replace(/\n/g, ' ')}`);
+            ics.push('STATUS:CONFIRMED');
+            ics.push('END:VEVENT');
+        });
+
+        ics.push('END:VCALENDAR');
+        return ics.join('\r\n');
+    }
+
+    function downloadICSFile(filename, content) {
+        const blob = new Blob([content], { type: 'text/calendar;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast(`📅 Fichier ${filename} téléchargé ! Importez-le dans Google Agenda.`);
+    }
+
+    function exportSingleDayICS(dayId) {
+        let foundDay = null;
+        weeksData.forEach(w => {
+            w.days.forEach(d => {
+                if (d.id === dayId) foundDay = d;
+            });
+        });
+
+        if (foundDay) {
+            const content = generateICSContent([foundDay]);
+            downloadICSFile(`seance-${foundDay.iso_date}.ics`, content);
+        }
+    }
+
+    function exportWeekICS(weekNum) {
+        const weekObj = weeksData.find(w => w.num === weekNum);
+        if (weekObj) {
+            const content = generateICSContent(weekObj.days);
+            downloadICSFile(`plan-marathon-semaine-${weekNum}.ics`, content);
+        }
+    }
+
+    function exportFullCalendarICS() {
+        let allEvents = [];
+        weeksData.forEach(w => {
+            allEvents = allEvents.concat(w.days);
+        });
+        const content = generateICSContent(allEvents);
+        downloadICSFile('plan-marathon-sub3h-complet.ics', content);
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.querySelector('span').textContent = msg;
+        toast.style.display = 'flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 4000);
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+        renderPaces();
+        renderWeeks();
+    });
+</script>
+
+</body>
+</html>
+</file>

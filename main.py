@@ -1,6 +1,7 @@
 """Streamlit user interface presentation layer."""
 
 from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -59,6 +60,29 @@ def check_password() -> bool:
 
 
 if not check_password():
+    st.stop()
+
+
+# ==========================================
+# APP NAVIGATION
+# ==========================================
+app_section = st.radio(
+    "Navigation",
+    ("Activités Strava", "Plan Marathon"),
+    horizontal=True,
+    label_visibility="collapsed",
+)
+
+
+def render_marathon_plan() -> None:
+    """Render the marathon planning section with an embedded HTML iframe."""
+    st.title("🏃 Plan Marathon Sub-3h")
+    st.caption("Du 14 Septembre 2026 au 17 Janvier 2027 - 18 Semaines d'entraînement.")
+    st.iframe(src=Path(__file__).with_name("plan_marathon.html"), height=1_250)
+
+
+if app_section == "Plan Marathon":
+    render_marathon_plan()
     st.stop()
 
 
