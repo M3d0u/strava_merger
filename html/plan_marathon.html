@@ -2929,7 +2929,7 @@
             ics.push(`DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}`);
             ics.push(`DTSTART;TZID=Europe/Paris:${startDateTime}`);
             ics.push(`DTEND;TZID=Europe/Paris:${endDateTime}`);
-            ics.push(`SUMMARY:${escapeICSValue(`${evt.title} - Marathon Sub-3h`)}`);
+            ics.push(`SUMMARY:${escapeICSValue(`${evt.title}`)}`);
             ics.push(`DESCRIPTION:${escapeICSValue(description)}`);
             ics.push('STATUS:CONFIRMED');
             ics.push('END:VEVENT');
