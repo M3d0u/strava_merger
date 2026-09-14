@@ -4,35 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plan Marathon Sub-3h (29 Semaines) — Course du 4 avril 2027</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --bg-card-hover: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-orange: #f97316;
-            --accent-blue: #38bdf8;
-            --accent-green: #22c55e;
-            --accent-purple: #a855f7;
-            --accent-red: #ef4444;
-            --accent-yellow: #eab308;
-            --border-color: #334155;
-            --card-radius: 12px;
+            --bg-main: #0e1117;
+            --bg-card: #262730;
+            --bg-card-hover: #31333f;
+            --text-main: #fafafa;
+            --text-muted: #808495;
+            --accent-orange: #ff4b4b;
+            --accent-blue: #00c0f2;
+            --accent-green: #09ab3b;
+            --accent-purple: #843df9;
+            --accent-red: #ff4b4b;
+            --accent-yellow: #fecb00;
+            --border-color: #31333f;
+            --card-radius: 8px;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
             background-color: var(--bg-main);
             color: var(--text-main);
-            padding: 24px 16px;
+            padding: 0px 4px;
             line-height: 1.5;
         }
 
@@ -104,7 +104,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            color: #f1f5f9;
+            color: var(--text-main);
         }
 
         .section-title::before {
@@ -186,7 +186,7 @@
         }
 
         .filter-select {
-            background-color: #0f172a;
+            background-color: var(--bg-main);
             border: 1px solid var(--border-color);
             color: var(--text-main);
             padding: 8px 16px;
@@ -201,7 +201,7 @@
 
         .filter-select:hover, .filter-select:focus {
             border-color: var(--accent-orange);
-            box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+            box-shadow: 0 0 0 2px rgba(255, 75, 75, 0.2);
         }
 
         .filter-select option {
@@ -211,7 +211,7 @@
         }
 
         .export-all-btn {
-            background: linear-gradient(135deg, var(--accent-orange), #ea580c);
+            background: linear-gradient(135deg, var(--accent-orange), #e03a3a);
             color: white;
             border: none;
             padding: 10px 18px;
@@ -222,13 +222,13 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+            box-shadow: 0 4px 12px rgba(255, 75, 75, 0.2);
             transition: all 0.2s;
         }
 
         .export-all-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+            box-shadow: 0 6px 16px rgba(255, 75, 75, 0.3);
         }
 
         /* CALENDAR WEEKS */
@@ -242,7 +242,7 @@
         }
 
         .week-header {
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(14, 17, 23, 0.5);
             padding: 16px 20px;
             display: flex;
             justify-content: space-between;
@@ -269,7 +269,7 @@
 
         .week-phase {
             font-weight: 600;
-            color: #f1f5f9;
+            color: var(--text-main);
             font-size: 1rem;
         }
 
@@ -323,7 +323,7 @@
             grid-template-columns: repeat(7, 1fr);
             gap: 12px;
             padding: 16px;
-            background: #0f172a;
+            background: var(--bg-main);
         }
 
         @media (max-width: 1100px) {
@@ -341,7 +341,7 @@
         .day-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
+            border-radius: var(--card-radius);
             padding: 12px;
             cursor: grab;
             user-select: none;
@@ -354,7 +354,7 @@
         }
 
         .day-card:hover {
-            border-color: #475569;
+            border-color: var(--accent-orange);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
@@ -382,7 +382,7 @@
         .day-name {
             font-weight: 700;
             font-size: 0.85rem;
-            color: #f1f5f9;
+            color: var(--text-main);
         }
 
         .day-date {
