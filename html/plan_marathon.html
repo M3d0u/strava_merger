@@ -178,28 +178,36 @@
             border: 1px solid var(--border-color);
         }
 
-        .filter-buttons {
+        .filter-selectors {
             display: flex;
-            gap: 8px;
+            gap: 12px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .filter-btn {
-            background: rgba(255, 255, 255, 0.05);
+        .filter-select {
+            background-color: #0f172a;
             border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            padding: 8px 14px;
+            color: var(--text-main);
+            padding: 8px 16px;
             border-radius: 8px;
-            cursor: pointer;
             font-size: 0.85rem;
             font-weight: 500;
-            transition: all 0.2s;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            min-width: 200px;
         }
 
-        .filter-btn:hover, .filter-btn.active {
-            background: var(--accent-orange);
-            color: #fff;
+        .filter-select:hover, .filter-select:focus {
             border-color: var(--accent-orange);
+            box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+        }
+
+        .filter-select option {
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            padding: 8px;
         }
 
         .export-all-btn {
@@ -479,12 +487,13 @@
 
     <!-- CONTROLS & FILTER -->
     <div class="controls-bar">
-        <div class="filter-buttons">
-            <button class="filter-btn active" onclick="filterPhase('ALL')">Toutes les phases</button>
-            <button class="filter-btn" onclick="filterPhase('PHASE 1')">Phase 1 (Base)</button>
-            <button class="filter-btn" onclick="filterPhase('PHASE 2')">Phase 2 (Spécifique)</button>
-            <button class="filter-btn" onclick="filterPhase('PHASE 3')">Phase 3 (Pic)</button>
-            <button class="filter-btn" onclick="filterPhase('PHASE 4')">Phase 4 (Affûtage)</button>
+        <div class="filter-selectors">
+            <select id="phase-select" class="filter-select" onchange="filterChanged('phase')">
+                <option value="ALL">Toutes les phases</option>
+            </select>
+            <select id="week-select" class="filter-select" onchange="filterChanged('week')">
+                <option value="ALL">Toutes les semaines</option>
+            </select>
         </div>
         <button class="export-all-btn" onclick="exportFullCalendarICS()">
             📅 Exporter le plan complet (.ICS)
@@ -2620,12 +2629,22 @@
     }
 
     // Render Weeks
-    function renderWeeks(filter = 'ALL') {
+    function renderWeeks() {
+        const phaseSelect = document.getElementById('phase-select');
+        const weekSelect = document.getElementById('week-select');
+
+        const phaseFilter = phaseSelect ? phaseSelect.value : 'ALL';
+        const weekFilter = weekSelect ? weekSelect.value : 'ALL';
+
         const container = document.getElementById('calendar-weeks');
         container.innerHTML = '';
 
         weeksData.forEach(week => {
-            if (filter !== 'ALL' && !week.phase.startsWith(filter)) return;
+            // Check week filter
+            if (weekFilter !== 'ALL' && week.num !== parseInt(weekFilter)) return;
+
+            // Check phase filter
+            if (phaseFilter !== 'ALL' && week.phase !== phaseFilter && !week.phase.startsWith(phaseFilter)) return;
 
             const weekEl = document.createElement('div');
             weekEl.className = 'week-container';
@@ -2748,7 +2767,7 @@
                         weekObj.days[toIdx].duration = tempDuration;
 
                         // Re-render week grid
-                        renderWeeks(currentFilter);
+                        renderWeeks();
                         showToast('🔄 Séance déplacée avec succès !');
                     }
                 }
@@ -2756,13 +2775,65 @@
         });
     }
 
-    let currentFilter = 'ALL';
-    function filterPhase(phase) {
-        currentFilter = phase;
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.textContent.includes(phase) || (phase === 'ALL' && btn.textContent.includes('Toutes')));
+    // Populate dropdown options dynamically
+    function populateFilters() {
+        const phaseSelect = document.getElementById('phase-select');
+        const weekSelect = document.getElementById('week-select');
+
+        // Extract unique phases from weeksData
+        const phases = ['ALL'];
+        weeksData.forEach(w => {
+            if (!phases.includes(w.phase)) {
+                phases.push(w.phase);
+            }
         });
-        renderWeeks(phase);
+
+        // Populate phase-select
+        phaseSelect.innerHTML = '';
+        phases.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p === 'ALL' ? 'Toutes les phases' : p;
+            phaseSelect.appendChild(opt);
+        });
+
+        // Populate week-select with "Semaine X (StartDate - EndDate)"
+        weekSelect.innerHTML = '';
+        const allWeeksOpt = document.createElement('option');
+        allWeeksOpt.value = 'ALL';
+        allWeeksOpt.textContent = 'Toutes les semaines';
+        weekSelect.appendChild(allWeeksOpt);
+
+        weeksData.forEach(w => {
+            const opt = document.createElement('option');
+            opt.value = w.num;
+            const startDate = w.days[0] ? w.days[0].date : '';
+            const endDate = w.days[w.days.length - 1] ? w.days[w.days.length - 1].date : '';
+            opt.textContent = `Semaine ${w.num} (${startDate} - ${endDate})`;
+            weekSelect.appendChild(opt);
+        });
+    }
+
+    // Handles dropdown changes
+    function filterChanged(source) {
+        const phaseSelect = document.getElementById('phase-select');
+        const weekSelect = document.getElementById('week-select');
+
+        if (source === 'phase') {
+            // When phase changes, reset week select to ALL
+            weekSelect.value = 'ALL';
+        } else if (source === 'week') {
+            // When week changes, if a specific week is selected, set phase select to that week's phase
+            if (weekSelect.value !== 'ALL') {
+                const weekNum = parseInt(weekSelect.value);
+                const weekObj = weeksData.find(w => w.num === weekNum);
+                if (weekObj) {
+                    phaseSelect.value = weekObj.phase;
+                }
+            }
+        }
+
+        renderWeeks();
     }
 
     // ICS GENERATION & EXPORT
@@ -2922,6 +2993,7 @@
     // Init
     document.addEventListener('DOMContentLoaded', () => {
         renderPaces();
+        populateFilters();
         renderWeeks();
     });
 </script>
