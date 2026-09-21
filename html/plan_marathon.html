@@ -241,6 +241,14 @@
             transition: all 0.3s ease;
         }
 
+        .week-container.collapsed .week-header {
+            border-bottom: none;
+        }
+
+        .week-container.collapsed .days-grid {
+            display: none;
+        }
+
         .week-header {
             background: rgba(14, 17, 23, 0.5);
             padding: 16px 20px;
@@ -250,6 +258,24 @@
             border-bottom: 1px solid var(--border-color);
             flex-wrap: wrap;
             gap: 10px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .week-header:hover {
+            background: rgba(14, 17, 23, 0.75);
+        }
+
+        .collapse-icon {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+            display: inline-block;
+        }
+
+        .week-container.collapsed .collapse-icon {
+            transform: rotate(-90deg);
         }
 
         .week-info {
@@ -480,6 +506,23 @@
 <body>
 
 <div class="container">
+
+    <header>
+        <div class="header-title">
+            <h1>Plan Marathon Sub-3h</h1>
+            <p>29 Semaines d'entraînement — Course le 4 avril 2027</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-badge">
+                <div class="value" id="current-date-badge">-</div>
+                <div class="label">Date du jour</div>
+            </div>
+            <div class="stat-badge">
+                <div class="value" id="current-week-badge">-</div>
+                <div class="label">Semaine Actuelle</div>
+            </div>
+        </div>
+    </header>
 
     <!-- ALLURES CIBLES -->
     <h2 class="section-title">Allures Cibles</h2>
@@ -2628,6 +2671,86 @@
         return 'type-ef';
     }
 
+    // Collapsed weeks state
+    const collapsedWeeks = new Set();
+
+    function initCollapsedWeeks() {
+        // Find today's date in YYYY-MM-DD format (local time zone)
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+
+        weeksData.forEach(week => {
+            if (week.days && week.days.length > 0) {
+                // We minimize a week if its last day is strictly before today
+                const lastDay = week.days[week.days.length - 1];
+                if (lastDay && lastDay.iso_date < todayStr) {
+                    collapsedWeeks.add(week.num);
+                }
+            }
+        });
+    }
+
+    function toggleWeekCollapse(weekNum) {
+        if (collapsedWeeks.has(weekNum)) {
+            collapsedWeeks.delete(weekNum);
+        } else {
+            collapsedWeeks.add(weekNum);
+        }
+        const weekEl = document.getElementById(`week-${weekNum}`);
+        if (weekEl) {
+            weekEl.classList.toggle('collapsed');
+        }
+    }
+
+    function updateHeaderStats() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+
+        // Format today's date beautifully in French, e.g., "Lun. 21 sept. 2026"
+        const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+        const formattedDate = today.toLocaleDateString('fr-FR', options);
+        // Capitalize the first letter
+        const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+        const dateBadge = document.getElementById('current-date-badge');
+        if (dateBadge) {
+            dateBadge.textContent = capitalizedDate;
+        }
+
+        // Find current week
+        let currentWeekNum = null;
+        weeksData.forEach(week => {
+            if (week.days && week.days.length > 0) {
+                const firstDay = week.days[0].iso_date;
+                const lastDay = week.days[week.days.length - 1].iso_date;
+                if (todayStr >= firstDay && todayStr <= lastDay) {
+                    currentWeekNum = week.num;
+                }
+            }
+        });
+
+        const weekBadge = document.getElementById('current-week-badge');
+        if (weekBadge) {
+            if (currentWeekNum) {
+                weekBadge.textContent = `Semaine ${currentWeekNum} / ${weeksData.length}`;
+            } else {
+                // If before the first day
+                const firstWeek = weeksData[0];
+                const firstDayStr = firstWeek && firstWeek.days[0] ? firstWeek.days[0].iso_date : '';
+                if (firstDayStr && todayStr < firstDayStr) {
+                    weekBadge.textContent = "Non commencé";
+                } else {
+                    weekBadge.textContent = "Plan Terminé !";
+                }
+            }
+        }
+    }
+
     // Render Weeks
     function renderWeeks() {
         const phaseSelect = document.getElementById('phase-select');
@@ -2646,18 +2769,20 @@
             // Check phase filter
             if (phaseFilter !== 'ALL' && week.phase !== phaseFilter && !week.phase.startsWith(phaseFilter)) return;
 
+            const isCollapsed = collapsedWeeks.has(week.num);
             const weekEl = document.createElement('div');
-            weekEl.className = 'week-container';
+            weekEl.className = `week-container${isCollapsed ? ' collapsed' : ''}`;
             weekEl.id = `week-${week.num}`;
 
             weekEl.innerHTML = `
-                <div class="week-header">
+                <div class="week-header" onclick="toggleWeekCollapse(${week.num})">
                     <div class="week-info">
+                        <span class="collapse-icon">▼</span>
                         <span class="week-badge">Semaine ${week.num}</span>
                         <span class="week-phase">${week.phase}</span>
                         ${week.note ? `<span class="week-note">${week.note}</span>` : ''}
                     </div>
-                    <div class="week-actions">
+                    <div class="week-actions" onclick="event.stopPropagation()">
                         <span class="week-vol">${week.total}</span>
                         <button class="btn-export-week" onclick="exportWeekICS(${week.num})">
                             📅 Exporter S${week.num}
@@ -2992,6 +3117,8 @@
 
     // Init
     document.addEventListener('DOMContentLoaded', () => {
+        initCollapsedWeeks();
+        updateHeaderStats();
         renderPaces();
         populateFilters();
         renderWeeks();
