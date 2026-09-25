@@ -139,7 +139,12 @@ def render_activities_actions(activities_to_merge: list[StravaActivity], service
 # REUSABLE UI PIPELINE COMPONENT
 # ==========================================
 @st.dialog("🔄 Validation de la fusion", width="large")  # type: ignore[misc]
-def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: list[StravaActivity], target_name: str) -> None:
+def render_merge_pipeline_dialog(
+    service: StravaService,
+    activities_to_merge: list[StravaActivity],
+    target_name: str,
+    sport_type: str | None = None,
+) -> None:
     """
     Launch manual deletion prompts and handle final unified processing uploads.
 
@@ -147,6 +152,7 @@ def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: li
         service (StravaService): Instance of StravaService to handle merging and uploading.
         activities_to_merge (list[StravaActivity]): List of StravaActivity instances to merge.
         target_name (str): Name for the merged activity.
+        sport_type (str, optional): Sport type for the merged activity.
     """
     # Ensure a state variable to track the merge success of the current dialog session
     dialog_success_key = f"merge_success_{'-'.join(str(act.id) for act in activities_to_merge)}"
@@ -177,7 +183,7 @@ def render_merge_pipeline_dialog(service: StravaService, activities_to_merge: li
 
     if st.button("🚀 Confirmer & lancer la fusion", type="primary", width="stretch"):
         with st.spinner("Génération du GPX et synchronisation..."):
-            success, error_msg = service.merge_and_upload(activities_to_merge, target_name)
+            success, error_msg = service.merge_and_upload(activities_to_merge, target_name, sport_type=sport_type)
             if success:
                 st.session_state[dialog_success_key] = True
                 st.rerun()
@@ -237,9 +243,7 @@ if commute_pairs or weight_info or general_activities:
                 col_info, col_btn = st.columns([3, 1], vertical_alignment="center")
 
                 with col_info:
-                    st.markdown(
-                        f"**Trajets du {date_label}** ({len(group)} trajets - total : {total_distance:.1f} km)  \n" f"`Détail : {distances_str}`"
-                    )
+                    st.markdown(f"**Trajets du {date_label}** ({len(group)} trajets - total : {total_distance:.1f} km)  \n`Détail : {distances_str}`")
                 with col_btn:
                     if st.button("⚡ Fusionner", key=f"auto_merge_{idx}", width="stretch"):
                         render_merge_pipeline_dialog(service, group, f"💼 Vélotaf - {date_label}")

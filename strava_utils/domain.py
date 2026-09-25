@@ -18,6 +18,7 @@ from strava_utils.constants import (
     STRAVA_FIELD_ID,
     STRAVA_FIELD_MOVING_TIME,
     STRAVA_FIELD_NAME,
+    STRAVA_FIELD_SPORT_TYPE,
     STRAVA_FIELD_START_DATE,
     STRAVA_FIELD_START_DATE_LOCAL,
     STRAVA_FIELD_START_LATLNG,
@@ -58,6 +59,7 @@ class StravaActivity(BaseModel):
     date: str
     name: str
     activity_type: str
+    sport_type: str = "Ride"
     distance_km: float
     duration: str
     raw: dict[str, Any] = Field(default_factory=dict)
@@ -79,15 +81,43 @@ class StravaActivity(BaseModel):
         date_str = parsed_date.strftime("%Y-%m-%d %H:%M")
         duration_str = str(timedelta(seconds=moving_seconds))
 
+        sport_type = str(payload.get(STRAVA_FIELD_SPORT_TYPE) or payload.get(STRAVA_FIELD_TYPE) or "Ride")
+        activity_type = str(payload.get(STRAVA_FIELD_TYPE) or sport_type)
+
         return cls(
             id=int(payload[STRAVA_FIELD_ID]),
             date=date_str,
             name=str(payload[STRAVA_FIELD_NAME]),
-            activity_type=str(payload[STRAVA_FIELD_TYPE]),
+            activity_type=activity_type,
+            sport_type=sport_type,
             distance_km=round(distance_meters / 1000, 2),
             duration=duration_str,
             raw=payload,
         )
+
+    @staticmethod
+    def resolve_sport_type(activities: list[StravaActivity]) -> str:
+        """Resolve the appropriate sport type for a list of activities to merge.
+
+        Args:
+            activities (list[StravaActivity]): List of StravaActivity instances.
+
+        Returns:
+            str: The resolved sport type (e.g. 'Ride', 'Run', 'EBikeRide').
+        """
+        if not activities:
+            return "Ride"
+
+        sport_types = {act.sport_type for act in activities if act.sport_type}
+        if len(sport_types) == 1:
+            return next(iter(sport_types))
+
+        # Check if all activities are cycling related
+        cycling_types = {"Ride", "EBikeRide", "GravelRide", "MountainBikeRide", "VirtualRide"}
+        if all(act.sport_type in cycling_types or act.activity_type in ("Ride", "EBikeRide") for act in activities):
+            return "Ride"
+
+        return activities[0].sport_type or activities[0].activity_type or "Ride"
 
     @staticmethod
     def _normalize_streams(streams: Any) -> dict[str, Any]:
@@ -117,21 +147,27 @@ class StravaActivity(BaseModel):
         return {}
 
     @staticmethod
-    def merge_to_gpx(activities: list[StravaActivity]) -> str:
+    def merge_to_gpx(activities: list[StravaActivity], sport_type: str | None = None) -> str:
         """Pure CPU-Bound pipeline merging domain entities into a GPX XML.
 
         Args:
             activities (list[StravaActivity]): List of StravaActivity instances to merge.
+            sport_type (str | None): Optional sport type to set in the GPX track. If None,
+                it is automatically resolved from activities.
 
         Returns:
             str: A string representation of the merged GPX XML.
         """
+        if sport_type is None:
+            sport_type = StravaActivity.resolve_sport_type(activities)
+
         gpx = gpxpy.gpx.GPX()
 
         # Register Garmin extension namespace properly at the root level to keeps the XML clean and fully compatible with Strava's parser
         gpx.nsmap["gpxtpx"] = "http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
 
         gpx_track = gpxpy.gpx.GPXTrack()
+        gpx_track.type = sport_type
         gpx.tracks.append(gpx_track)
 
         sorted_acts = sorted(activities, key=lambda x: str(x.raw.get(STRAVA_FIELD_START_DATE, "")))

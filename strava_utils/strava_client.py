@@ -6,9 +6,11 @@ import requests
 import streamlit as st
 
 from strava_utils.constants import (
+    STRAVA_FIELD_ACTIVITY_TYPE,
     STRAVA_FIELD_DESCRIPTION,
     STRAVA_FIELD_HIDE_FROM_HOME,
     STRAVA_FIELD_NAME,
+    STRAVA_FIELD_SPORT_TYPE,
     STRAVA_SUFFIX_ACTIVITY,
     STRAVA_SUFFIX_ATHLETE,
     STRAVA_SUFFIX_UPLOAD,
@@ -70,12 +72,21 @@ class StravaAPIClient:
         res = requests.get(f"{STRAVA_URL}/{STRAVA_SUFFIX_ATHLETE}", headers=self._build_header())
         return res.json() if res.status_code == 200 else {}
 
-    def upload_gpx(self, gpx_xml: str, name: str, description: str | None = None) -> dict[str, Any] | None:
+    def upload_gpx(
+        self,
+        gpx_xml: str,
+        name: str,
+        description: str | None = None,
+        sport_type: str | None = None,
+    ) -> dict[str, Any] | None:
         """Upload GPX file to Strava"""
         files = {"file": ("merged.gpx", gpx_xml, "application/gpx+xml")}
         data: dict[str, Any] = {STRAVA_FIELD_NAME: name, "data_type": "gpx"}
         if description is not None:
             data[STRAVA_FIELD_DESCRIPTION] = description
+        if sport_type is not None:
+            data[STRAVA_FIELD_SPORT_TYPE] = sport_type
+            data[STRAVA_FIELD_ACTIVITY_TYPE] = sport_type.lower()
         res = requests.post(f"{STRAVA_URL}/{STRAVA_SUFFIX_UPLOAD}", headers=self._build_header(), data=data, files=files)
         try:
             return cast(dict[str, Any], res.json())
@@ -103,8 +114,10 @@ class StravaAPIClient:
         except Exception:
             return None
 
-    def mute_activity(self, activity_id: int) -> dict[str, Any] | None:
-        """Mute the activity (hide it from home and club feeds)."""
-        data = {STRAVA_FIELD_HIDE_FROM_HOME: "true"}
+    def mute_activity(self, activity_id: int, sport_type: str | None = None) -> dict[str, Any] | None:
+        """Mute the activity (hide it from home and club feeds) and optionally set sport type."""
+        data: dict[str, Any] = {STRAVA_FIELD_HIDE_FROM_HOME: "true"}
+        if sport_type is not None:
+            data[STRAVA_FIELD_SPORT_TYPE] = sport_type
         res = requests.put(f"{STRAVA_URL}/{STRAVA_SUFFIX_ACTIVITY}/{activity_id}", headers=self._build_header(), data=data)
         return res.json() if res.status_code in [200, 201] else None

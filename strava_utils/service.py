@@ -109,12 +109,13 @@ class StravaService:
             return f"{message} ({', '.join(err_details)})"
         return message
 
-    def _poll_upload_status(self, upload_id: int) -> tuple[bool, str | None, bool]:
+    def _poll_upload_status(self, upload_id: int, sport_type: str | None = None) -> tuple[bool, str | None, bool]:
         """
         Polls Strava until processing is complete or fails.
 
         Args:
             upload_id (int): The ID of the upload.
+            sport_type (str | None): Optional sport type to set on the created activity.
 
         Returns:
             tuple[bool, str | None, bool]: A tuple containing the success status, error message, and duplicate flag.
@@ -136,27 +137,36 @@ class StravaService:
 
             activity_id = status.get(STRAVA_FIELD_ACTIVITY_ID)
             if activity_id:
-                self.client.mute_activity(activity_id)
+                self.client.mute_activity(activity_id, sport_type=sport_type)
                 return True, None, False
 
         return False, "Le traitement de l'activité sur Strava a expiré sans confirmation.", False
 
-    def merge_and_upload(self, activities: list[StravaActivity], target_name: str) -> tuple[bool, str | None]:
+    def merge_and_upload(
+        self,
+        activities: list[StravaActivity],
+        target_name: str,
+        sport_type: str | None = None,
+    ) -> tuple[bool, str | None]:
         """Coordinate loading missing streams, compiling GPX, and uploading.
 
         Args:
             activities (list[StravaActivity]): List of StravaActivity instances to merge.
             target_name (str): The name for the merged activity.
+            sport_type (str | None): Optional sport type override. If None, it is resolved from activities.
 
         Returns:
             tuple[bool, str | None]: A tuple containing the success status and error message.
         """
+        if sport_type is None:
+            sport_type = StravaActivity.resolve_sport_type(activities)
+
         for act in activities:
             if not act.streams:
                 act.streams = self.client.fetch_streams(act.id)
 
         try:
-            gpx_xml = StravaActivity.merge_to_gpx(activities)
+            gpx_xml = StravaActivity.merge_to_gpx(activities, sport_type=sport_type)
         except ValueError as e:
             return False, str(e)
 
@@ -167,7 +177,12 @@ class StravaService:
         base_retry_delay = 5
 
         for attempt in range(max_upload_attempts):
-            upload_res = self.client.upload_gpx(gpx_xml, target_name, description=description)
+            upload_res = self.client.upload_gpx(
+                gpx_xml,
+                target_name,
+                description=description,
+                sport_type=sport_type,
+            )
 
             # Scenario A: Immediate failure on POST
             if not upload_res or STRAVA_FIELD_ID not in upload_res:
@@ -178,7 +193,10 @@ class StravaService:
                 return False, f"La requête d'envoi a été rejetée par Strava : {error_msg}"
 
             # Scenario B: Async polling via helper
-            success, error_msg, is_duplicate = self._poll_upload_status(upload_res[STRAVA_FIELD_ID])
+            success, error_msg, is_duplicate = self._poll_upload_status(
+                upload_res[STRAVA_FIELD_ID],
+                sport_type=sport_type,
+            )
 
             if success:
                 return True, None
