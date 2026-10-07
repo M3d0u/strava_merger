@@ -164,27 +164,6 @@
             color: var(--text-main);
         }
 
-        .upper-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 14px;
-            margin-bottom: 12px;
-        }
-
-        .upper-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--card-radius);
-            padding: 18px 20px;
-        }
-
-        .upper-card h3 { color: var(--accent-orange); margin-bottom: 8px; }
-        .upper-card ol { padding-left: 22px; }
-        .upper-card li { margin-bottom: 5px; }
-        .upper-guidance { color: #cbd5e1; font-size: 0.9rem; margin-bottom: 28px; }
-        .upper-guidance p { margin-bottom: 6px; }
-        .upper-link { color: var(--accent-blue); display: inline-block; margin-top: 6px; }
-
         /* FILTER & CONTROLS */
         .controls-bar {
             display: flex;
@@ -549,17 +528,6 @@
     <h2 class="section-title">Allures Cibles</h2>
     <div class="paces-grid" id="paces-grid"></div>
 
-    <section id="upper-sessions">
-        <h2 class="section-title">Musculation — deux séances upper</h2>
-        <div class="upper-grid" id="upper-grid"></div>
-        <div class="upper-guidance">
-            <p>Échauffement : 5–8 min, puis 2 séries de montée en charge sur le premier développé et le premier tirage. Les séries indiquées sont les séries de travail.</p>
-            <p>Garde 1–3 répétitions en réserve ; repose-toi 2–3 min sur les trois premiers exercices, 60–90 s sur les autres. Quand toutes les séries atteignent le haut de la fourchette avec une technique stable, augmente légèrement la charge.</p>
-            <p>Les tractions lestées remplacent la longue pyramide actuelle : fais des séries d'échauffement progressives sans fatigue, puis 3 séries de travail. HSPU partiels : facultatifs en travail technique, sans remplacer le développé épaules pour la prise de muscle. Dips : substitut possible au développé couché si les épaules les tolèrent.</p>
-            <p>Après l'upper, garde le renforcement coureur prévu, mais léger le lundi avant la séance rapide du mardi. En semaine allégée : 2 séries sur chacun des 3 premiers exercices, 1 série sur les 4 derniers, sans échec. Dès le 15 mars 2027, le plan prévoit l'arrêt de la musculation jusqu'au marathon.</p>
-        </div>
-    </section>
-
     <!-- CONTROLS & FILTER -->
     <div class="controls-bar">
         <div class="filter-selectors">
@@ -620,15 +588,6 @@
             ]
         }
     };
-
-    function renderUpperSessions() {
-        document.getElementById('upper-grid').innerHTML = Object.values(upperSessions).map(session => `
-            <article class="upper-card">
-                <h3>${session.label}</h3>
-                <ol>${session.exercises.map(exercise => `<li>${exercise}</li>`).join('')}</ol>
-            </article>
-        `).join('');
-    }
 
     let weeksData = [
   {
@@ -1240,7 +1199,6 @@
                         <span class="drag-handle">⋮⋮</span>
                     </div>
                     <div class="workout-detail">${day.detail || 'Repos / Pas de séance'}</div>
-                    ${day.title.includes('Upper ') ? '<a class="upper-link" href="#upper-sessions">Voir les exercices ↑</a>' : ''}
                 </div>
                 <div class="day-footer">
                     <span class="workout-duration">${day.duration ? '⏱️ ' + day.duration : ''}</span>
@@ -1552,7 +1510,6 @@
         initCollapsedWeeks();
         updateHeaderStats();
         renderPaces();
-        renderUpperSessions();
         populateFilters();
         renderWeeks();
     });
