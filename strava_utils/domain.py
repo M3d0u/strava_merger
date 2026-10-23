@@ -275,10 +275,10 @@ class StravaActivity(BaseModel):
             default=None,
         )
 
-        if most_recent is None or "🏋️‍♀️" in most_recent.name:
+        if "🏋️‍♀️" in most_recent.name:
             return []
-        else:
-            return [(most_recent, "🏋️‍♀️ Upper")]
+        
+        return [(most_recent, "🏋️‍♀️ Upper")]
 
     @staticmethod
     def _fetch_weather_data(lat: float, lon: float, local_dt: datetime) -> tuple[float | None, int | None]:
