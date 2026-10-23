@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
-from heapq import nlargest
 from typing import Any
 
 import gpxpy
@@ -270,23 +269,16 @@ class StravaActivity(BaseModel):
             list[tuple[StravaActivity, str]]: Returns a list of tuples containing the
             weight training activities and the new names to assign.
         """
-        recent_weight_acts = nlargest(
-            2, (act for act in activities if act.activity_type == "WeightTraining"), key=lambda act: act.raw.get(STRAVA_FIELD_START_DATE, "")
+        most_recent = max(
+            (act for act in activities if act.activity_type == "WeightTraining"),
+            key=lambda act: act.raw.get(STRAVA_FIELD_START_DATE, ""),
+            default=None,
         )
 
-        if not recent_weight_acts or len(recent_weight_acts) < 2:
+        if most_recent is None or "🏋️‍♀️" in most_recent.name:
             return []
-
-        most_recent = recent_weight_acts[0]
-        name = most_recent.name
-
-        if "🏋️‍♀️" in name or "Push" in name or "Pull" in name:
-            return []
-
-        has_prev_pull = len(recent_weight_acts) > 1 and "Pull" in recent_weight_acts[1].name
-        new_name = "🏋️‍♀️ Push" if has_prev_pull else "🏋️‍♀️ Pull"
-
-        return [(most_recent, new_name)]
+        else:
+            return [(most_recent, "🏋️‍♀️ Upper")]
 
     @staticmethod
     def _fetch_weather_data(lat: float, lon: float, local_dt: datetime) -> tuple[float | None, int | None]:
